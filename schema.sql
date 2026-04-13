@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS events (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   year INTEGER NOT NULL,
   month INTEGER,
+  day INTEGER CHECK (day >= 1 AND day <= 31),
   title TEXT NOT NULL,
   summary TEXT NOT NULL,
   detail TEXT,

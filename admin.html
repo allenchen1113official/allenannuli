@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>後台管理 · 陳艾倫大事紀</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <script src="config.js"></script>
 <style>
   :root {
@@ -465,7 +466,10 @@
     <div class="page active" id="page-events">
       <div class="page-header">
         <div class="page-title">大事紀管理 <small id="eventsCount"></small></div>
-        <button class="btn btn-primary" onclick="openEventModal()">+ 新增紀事</button>
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn btn-ghost" onclick="openImportModal()">📥 批次匯入</button>
+          <button class="btn btn-primary" onclick="openEventModal()">+ 新增紀事</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table>
@@ -473,6 +477,7 @@
             <tr>
               <th style="width:70px">年份</th>
               <th style="width:50px">月份</th>
+              <th style="width:40px">日</th>
               <th>標題</th>
               <th>摘要</th>
               <th>分類</th>
@@ -521,10 +526,10 @@
     </div>
     <div class="modal-body">
       <input type="hidden" id="eventId">
-      <div class="form-row">
+      <div class="form-row" style="grid-template-columns:1fr 1fr 1fr">
         <div class="form-group">
           <label class="form-label required">年份</label>
-          <input type="number" id="eventYear" class="form-input" placeholder="例：1990" min="1975" max="2026">
+          <input type="number" id="eventYear" class="form-input" placeholder="例：1990" min="1900" max="2100">
         </div>
         <div class="form-group">
           <label class="form-label">月份</label>
@@ -534,6 +539,19 @@
             <option>4</option><option>5</option><option>6</option>
             <option>7</option><option>8</option><option>9</option>
             <option>10</option><option>11</option><option>12</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">日</label>
+          <select id="eventDay" class="form-select">
+            <option value="">不指定</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+            <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+            <option>11</option><option>12</option><option>13</option><option>14</option><option>15</option>
+            <option>16</option><option>17</option><option>18</option><option>19</option><option>20</option>
+            <option>21</option><option>22</option><option>23</option><option>24</option><option>25</option>
+            <option>26</option><option>27</option><option>28</option><option>29</option><option>30</option>
+            <option>31</option>
           </select>
         </div>
       </div>
@@ -596,6 +614,62 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('catModal')">取消</button>
       <button class="btn btn-primary" id="catSaveBtn" onclick="saveCategory()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── IMPORT MODAL ── -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal" style="width:min(680px,100%)">
+    <div class="modal-header">
+      <h3>📥 批次匯入大事紀</h3>
+      <button class="modal-close" onclick="closeModal('importModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <!-- Step 1: Upload -->
+      <div id="importStep1">
+        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.85rem;color:var(--text-muted);line-height:1.7">
+          請使用「<strong style="color:#a5b4fc">大事紀匯入範本.xlsx</strong>」填入資料後上傳。<br>
+          欄位順序：年份* | 月份 | 日 | 標題* | 摘要* | 詳細說明 | 分類（逗號分隔） | 圖片網址<br>
+          第 1 列為標題列，第 2 列為提示列，資料從<strong style="color:#a5b4fc">第 3 列</strong>開始讀取。
+        </div>
+        <div id="importDropZone" style="border:2px dashed var(--border);border-radius:12px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all 0.2s" onclick="document.getElementById('importFileInput').click()" ondragover="event.preventDefault();this.style.borderColor='#6366f1'" ondragleave="this.style.borderColor=''" ondrop="handleImportDrop(event)">
+          <div style="font-size:2.5rem;margin-bottom:0.5rem">📂</div>
+          <div style="font-weight:600;margin-bottom:0.3rem">點擊選擇或拖曳 Excel 檔案</div>
+          <div style="font-size:0.82rem;color:var(--text-muted)">.xlsx / .xls 格式</div>
+        </div>
+        <input type="file" id="importFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleImportFile(this.files[0])">
+      </div>
+
+      <!-- Step 2: Preview -->
+      <div id="importStep2" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem">
+          <div id="importSummary" style="font-size:0.88rem;color:var(--text-muted)"></div>
+          <button class="btn btn-ghost btn-sm" onclick="resetImport()">← 重新選擇</button>
+        </div>
+        <div style="max-height:340px;overflow-y:auto;border-radius:10px;border:1px solid var(--border)">
+          <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+            <thead>
+              <tr style="background:var(--surface2);position:sticky;top:0">
+                <th style="padding:0.5rem 0.7rem;text-align:left;width:30px">#</th>
+                <th style="padding:0.5rem 0.7rem;text-align:left;width:55px">日期</th>
+                <th style="padding:0.5rem 0.7rem;text-align:left">標題</th>
+                <th style="padding:0.5rem 0.7rem;text-align:left">摘要</th>
+                <th style="padding:0.5rem 0.7rem;text-align:left">分類</th>
+                <th style="padding:0.5rem 0.7rem;text-align:center;width:50px">狀態</th>
+              </tr>
+            </thead>
+            <tbody id="importPreviewBody"></tbody>
+          </table>
+        </div>
+        <div id="importErrors" style="margin-top:0.8rem;display:none">
+          <div style="color:#fca5a5;font-size:0.83rem;padding:0.6rem 0.8rem;background:rgba(239,68,68,0.1);border-radius:8px;border:1px solid rgba(239,68,68,0.2)" id="importErrorList"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('importModal')">取消</button>
+      <button class="btn btn-primary" id="importConfirmBtn" style="display:none" onclick="executeImport()">匯入</button>
     </div>
   </div>
 </div>
@@ -670,6 +744,7 @@ function renderEventsTable() {
       <tr>
         <td>${ev.year}</td>
         <td>${ev.month || '—'}</td>
+        <td>${ev.day || '—'}</td>
         <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escHtml(ev.title)}">${escHtml(ev.title)}</td>
         <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)" title="${escHtml(ev.summary)}">${escHtml(ev.summary)}</td>
         <td style="max-width:180px">${tagsHTML || '<span style="color:var(--text-muted)">—</span>'}</td>
@@ -728,6 +803,7 @@ function openEventModal(id) {
   document.getElementById('eventId').value = '';
   document.getElementById('eventYear').value = '';
   document.getElementById('eventMonth').value = '';
+  document.getElementById('eventDay').value = '';
   document.getElementById('eventTitle').value = '';
   document.getElementById('eventSummary').value = '';
   document.getElementById('eventDetail').value = '';
@@ -742,6 +818,7 @@ function openEventModal(id) {
     document.getElementById('eventId').value = ev.id;
     document.getElementById('eventYear').value = ev.year;
     document.getElementById('eventMonth').value = ev.month || '';
+    document.getElementById('eventDay').value = ev.day || '';
     document.getElementById('eventTitle').value = ev.title;
     document.getElementById('eventSummary').value = ev.summary;
     document.getElementById('eventDetail').value = ev.detail || '';
@@ -764,6 +841,7 @@ async function saveEvent() {
   const id = document.getElementById('eventId').value;
   const year = parseInt(document.getElementById('eventYear').value);
   const month = document.getElementById('eventMonth').value ? parseInt(document.getElementById('eventMonth').value) : null;
+  const day = document.getElementById('eventDay').value ? parseInt(document.getElementById('eventDay').value) : null;
   const title = document.getElementById('eventTitle').value.trim();
   const summary = document.getElementById('eventSummary').value.trim();
   const detail = document.getElementById('eventDetail').value.trim();
@@ -786,14 +864,14 @@ async function saveEvent() {
 
     if (id) {
       const { error } = await client.from('events').update({
-        year, month, title, summary,
+        year, month, day, title, summary,
         detail: detail || null,
         image_url: image_url || null
       }).eq('id', id);
       if (error) throw error;
     } else {
       const { data, error } = await client.from('events').insert([{
-        year, month, title, summary,
+        year, month, day, title, summary,
         detail: detail || null,
         image_url: image_url || null
       }]).select();
@@ -979,6 +1057,167 @@ function showConfirm(title, msg, onConfirm) {
 function escHtml(str) {
   if (!str) return '';
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── IMPORT ────────────────────────────────────────
+let importRows = [];
+
+function openImportModal() {
+  resetImport();
+  openModal('importModal');
+}
+
+function resetImport() {
+  importRows = [];
+  document.getElementById('importStep1').style.display = '';
+  document.getElementById('importStep2').style.display = 'none';
+  document.getElementById('importConfirmBtn').style.display = 'none';
+  document.getElementById('importFileInput').value = '';
+  document.getElementById('importDropZone').style.borderColor = '';
+}
+
+function handleImportDrop(e) {
+  e.preventDefault();
+  e.currentTarget.style.borderColor = '';
+  const file = e.dataTransfer.files[0];
+  if (file) handleImportFile(file);
+}
+
+function handleImportFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      // Read from row 3 (skip header row 1 + hint row 2), index=0 so rows 0,1 skipped → range override
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      range.s.r = 2; // start from row index 2 (= Excel row 3)
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, range });
+      parseImportRows(rows);
+    } catch (err) {
+      showToast('Excel 解析失敗：' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseImportRows(rawRows) {
+  const errors = [];
+  importRows = [];
+
+  rawRows.forEach((row, i) => {
+    if (!row || row.every(c => c === undefined || c === null || c === '')) return;
+    const rowNum = i + 3;
+    const year = row[0] ? parseInt(row[0]) : null;
+    const month = row[1] ? parseInt(row[1]) : null;
+    const day = row[2] ? parseInt(row[2]) : null;
+    const title = row[3] ? String(row[3]).trim() : '';
+    const summary = row[4] ? String(row[4]).trim() : '';
+    const detail = row[5] ? String(row[5]).trim() : '';
+    const catRaw = row[6] ? String(row[6]).trim() : '';
+    const image_url = row[7] ? String(row[7]).trim() : '';
+
+    const rowErrors = [];
+    if (!year || isNaN(year)) rowErrors.push('年份必填');
+    if (!title) rowErrors.push('標題必填');
+    if (!summary) rowErrors.push('摘要必填');
+    if (month && (month < 1 || month > 12)) rowErrors.push('月份需為 1-12');
+    if (day && (day < 1 || day > 31)) rowErrors.push('日需為 1-31');
+
+    const catNames = catRaw ? catRaw.split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
+    const catIds = catNames.map(name => {
+      const found = allCategories.find(c => c.name === name);
+      return found ? found.id : null;
+    });
+    const unknownCats = catNames.filter((_, i) => !catIds[i]);
+    if (unknownCats.length) rowErrors.push(`未知分類：${unknownCats.join('、')}`);
+
+    importRows.push({
+      rowNum, year, month, day, title, summary,
+      detail: detail || null, image_url: image_url || null,
+      catIds: catIds.filter(Boolean), catNames,
+      errors: rowErrors, valid: rowErrors.length === 0
+    });
+    if (rowErrors.length) errors.push(`第${rowNum}列：${rowErrors.join('、')}`);
+  });
+
+  showImportPreview(errors);
+}
+
+function showImportPreview(errors) {
+  if (importRows.length === 0) {
+    showToast('未讀取到任何資料（請確認資料從第3列開始）', 'error');
+    return;
+  }
+  document.getElementById('importStep1').style.display = 'none';
+  document.getElementById('importStep2').style.display = '';
+
+  const validCount = importRows.filter(r => r.valid).length;
+  document.getElementById('importSummary').innerHTML =
+    `共讀取 <strong style="color:var(--text)">${importRows.length}</strong> 筆，` +
+    `可匯入 <strong style="color:#4ade80">${validCount}</strong> 筆` +
+    (errors.length ? `，有錯誤 <strong style="color:#f87171">${errors.length}</strong> 筆` : '');
+
+  document.getElementById('importPreviewBody').innerHTML = importRows.map(r => {
+    const dateStr = [r.year, r.month, r.day].filter(Boolean).join('/');
+    const status = r.valid ? '✅' : '❌';
+    const rowStyle = r.valid ? '' : 'background:rgba(239,68,68,0.06)';
+    return `<tr style="${rowStyle}">
+      <td style="padding:0.45rem 0.7rem;color:var(--text-muted)">${r.rowNum}</td>
+      <td style="padding:0.45rem 0.7rem;white-space:nowrap">${escHtml(dateStr)}</td>
+      <td style="padding:0.45rem 0.7rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(r.title)}">${escHtml(r.title)}</td>
+      <td style="padding:0.45rem 0.7rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted)" title="${escHtml(r.summary)}">${escHtml(r.summary)}</td>
+      <td style="padding:0.45rem 0.7rem">${r.catNames.map(n=>`<span class="tag" style="background:${allCategories.find(c=>c.name===n)?.color||'#6b7280'}">${n}</span>`).join(' ') || '—'}</td>
+      <td style="padding:0.45rem 0.7rem;text-align:center" title="${escHtml(r.errors.join('、'))}">${status}</td>
+    </tr>`;
+  }).join('');
+
+  if (errors.length) {
+    document.getElementById('importErrors').style.display = '';
+    document.getElementById('importErrorList').innerHTML =
+      '⚠️ 錯誤列不會被匯入：<br>' + errors.map(e => escHtml(e)).join('<br>');
+  } else {
+    document.getElementById('importErrors').style.display = 'none';
+  }
+
+  if (validCount > 0) {
+    const btn = document.getElementById('importConfirmBtn');
+    btn.style.display = '';
+    btn.textContent = `匯入 ${validCount} 筆`;
+  }
+}
+
+async function executeImport() {
+  const btn = document.getElementById('importConfirmBtn');
+  const validRows = importRows.filter(r => r.valid);
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 匯入中...';
+
+  let success = 0, fail = 0;
+  for (const row of validRows) {
+    try {
+      const { data, error } = await client.from('events').insert([{
+        year: row.year, month: row.month, day: row.day,
+        title: row.title, summary: row.summary,
+        detail: row.detail, image_url: row.image_url
+      }]).select();
+      if (error) throw error;
+      const eventId = data[0].id;
+      if (row.catIds.length) {
+        await client.from('event_categories').insert(
+          row.catIds.map(cid => ({ event_id: eventId, category_id: cid }))
+        );
+      }
+      success++;
+    } catch { fail++; }
+  }
+
+  btn.disabled = false;
+  btn.textContent = `匯入 ${validRows.length} 筆`;
+  showToast(`匯入完成：成功 ${success} 筆${fail ? `，失敗 ${fail} 筆` : ''}`, success > 0 ? 'success' : 'error');
+  closeModal('importModal');
+  await loadEvents();
 }
 
 init();

@@ -496,7 +496,8 @@ function renderEventCard(ev) {
   const tagsHTML = cats.map(c =>
     `<span class="tag" style="background:${c.color}">${c.icon || ''} ${c.name}</span>`
   ).join('');
-  const monthStr = ev.month ? `${ev.month}月` : '';
+  const dateParts = [ev.month ? `${ev.month}月` : '', ev.day ? `${ev.day}日` : ''].filter(Boolean);
+  const dateStr = dateParts.join('');
 
   return `
     <div class="event-item" data-event-id="${ev.id}">
@@ -504,7 +505,7 @@ function renderEventCard(ev) {
       <div class="event-card">
         <div class="event-header">
           <div class="event-title">${escHtml(ev.title)}</div>
-          ${monthStr ? `<div class="event-month">${monthStr}</div>` : ''}
+          ${dateStr ? `<div class="event-month">${dateStr}</div>` : ''}
         </div>
         ${tagsHTML ? `<div class="event-tags">${tagsHTML}</div>` : ''}
         <div class="event-summary">${escHtml(ev.summary)}</div>
@@ -520,7 +521,11 @@ function showPopup(e, event) {
     `<span class="tag" style="background:${c.color}">${c.icon || ''} ${c.name}</span>`
   ).join('');
 
-  const monthStr = event.month ? `${event.year}年${event.month}月` : `${event.year}年`;
+  const monthStr = [
+    `${event.year}年`,
+    event.month ? `${event.month}月` : '',
+    event.day ? `${event.day}日` : ''
+  ].join('');
   const imgHTML = event.image_url
     ? `<img src="${escHtml(event.image_url)}" class="popup-image" alt="" loading="lazy">`
     : '';
