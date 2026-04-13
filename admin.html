@@ -9,427 +9,220 @@
 <script src="config.js"></script>
 <style>
   :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface2: #1e1e2e;
-    --surface3: #252535;
-    --border: #2a2a3e;
-    --text: #e2e8f0;
-    --text-muted: #94a3b8;
-    --accent: #6366f1;
-    --accent2: #8b5cf6;
+    --bg: #020c1b;
+    --surface: #0a1929;
+    --surface2: #0d2137;
+    --surface3: #1a3a5c;
+    --border: #1a3a5c;
+    --text: #e0eeff;
+    --text-muted: #7bafd4;
+    --accent: #1d7fe5;
+    --accent2: #0ea5e9;
     --danger: #ef4444;
     --success: #22c55e;
     --warning: #f59e0b;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-  /* ── LAYOUT ── */
-  .app-layout {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    min-height: 100vh;
-  }
+  .app-layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
 
-  /* ── SIDEBAR ── */
+  /* SIDEBAR */
   .sidebar {
     background: var(--surface);
     border-right: 1px solid var(--border);
     padding: 1.5rem 1rem;
-    position: sticky;
-    top: 0;
-    height: 100vh;
+    position: sticky; top: 0; height: 100vh;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
   }
   .sidebar-logo {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text);
+    font-size: 1rem; font-weight: 700;
     padding: 0 0.5rem 1.5rem;
     border-bottom: 1px solid var(--border);
     margin-bottom: 1.5rem;
   }
   .sidebar-logo span {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    background: linear-gradient(135deg, #e0eeff, #7dd3fc, #1d7fe5);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   }
+  .sidebar-user { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.3rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.6rem 0.75rem;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    border: none;
-    background: none;
-    width: 100%;
-    text-align: left;
-    margin-bottom: 0.2rem;
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.6rem 0.75rem; border-radius: 8px;
+    cursor: pointer; transition: all 0.15s;
+    color: var(--text-muted); font-size: 0.9rem;
+    border: none; background: none; width: 100%; text-align: left; margin-bottom: 0.2rem;
   }
   .nav-item:hover { background: var(--surface2); color: var(--text); }
-  .nav-item.active { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+  .nav-item.active { background: rgba(29,127,229,0.18); color: #7dd3fc; }
   .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
   .sidebar-bottom {
-    margin-top: auto;
-    padding-top: 1rem;
+    margin-top: auto; padding-top: 1rem;
     border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 0.2rem;
   }
-  .sidebar-bottom a {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.6rem 0.75rem;
-    color: var(--text-muted);
-    text-decoration: none;
-    font-size: 0.85rem;
-    border-radius: 8px;
-    transition: all 0.15s;
+  .sidebar-bottom a, .sidebar-bottom button {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.6rem 0.75rem; color: var(--text-muted);
+    text-decoration: none; font-size: 0.85rem;
+    border-radius: 8px; transition: all 0.15s;
+    background: none; border: none; cursor: pointer; width: 100%; text-align: left; font-family: inherit;
   }
-  .sidebar-bottom a:hover { background: var(--surface2); color: var(--text); }
+  .sidebar-bottom a:hover, .sidebar-bottom button:hover { background: var(--surface2); color: var(--text); }
+  .btn-logout { color: #fca5a5 !important; }
+  .btn-logout:hover { background: rgba(239,68,68,0.1) !important; color: #f87171 !important; }
 
-  /* ── MAIN CONTENT ── */
-  .main-content {
-    padding: 2rem;
-    overflow-y: auto;
+  /* HAMBURGER */
+  .hamburger {
+    display: none; position: fixed; top: 0.9rem; left: 0.9rem;
+    z-index: 600; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 1.2rem;
+    padding: 0.4rem 0.65rem; cursor: pointer; line-height: 1;
   }
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 400; }
+  .sidebar-overlay.open { display: block; }
+
+  /* MAIN */
+  .main-content { padding: 2rem; overflow-y: auto; }
   .page { display: none; }
   .page.active { display: block; }
 
-  /* ── PAGE HEADER ── */
   .page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    gap: 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
   }
-  .page-title {
-    font-size: 1.4rem;
-    font-weight: 700;
-  }
-  .page-title small {
-    font-size: 0.85rem;
-    font-weight: 400;
-    color: var(--text-muted);
-    margin-left: 0.5rem;
-  }
+  .page-title { font-size: 1.4rem; font-weight: 700; }
+  .page-title small { font-size: 0.85rem; font-weight: 400; color: var(--text-muted); margin-left: 0.5rem; }
 
-  /* ── BUTTONS ── */
+  /* BUTTONS */
   .btn {
-    padding: 0.5rem 1.1rem;
-    border-radius: 8px;
-    font-size: 0.87rem;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
+    padding: 0.5rem 1.1rem; border-radius: 8px; font-size: 0.87rem; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 0.4rem;
   }
-  .btn-primary {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: white;
-  }
+  .btn-primary { background: linear-gradient(135deg, #1d7fe5, #0ea5e9); color: white; }
   .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-  .btn-ghost {
-    background: var(--surface2);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
   .btn-ghost:hover { background: var(--surface3); }
   .btn-danger { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
   .btn-danger:hover { background: rgba(239,68,68,0.25); }
   .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-  /* ── TABLE ── */
-  .table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  table { width: 100%; border-collapse: collapse; }
+  /* TABLE */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 480px; }
   th {
-    background: var(--surface2);
-    padding: 0.75rem 1rem;
-    text-align: left;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    font-weight: 600;
+    background: var(--surface2); padding: 0.75rem 1rem; text-align: left;
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text-muted); font-weight: 600;
   }
-  td {
-    padding: 0.8rem 1rem;
-    border-top: 1px solid var(--border);
-    font-size: 0.88rem;
-    vertical-align: middle;
-  }
+  td { padding: 0.8rem 1rem; border-top: 1px solid var(--border); font-size: 0.88rem; vertical-align: middle; }
   tr:hover td { background: rgba(255,255,255,0.02); }
   .td-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .tag { padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; color: white; display: inline-block; }
+  .tag-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; vertical-align: middle; }
 
-  /* ── TAGS IN TABLE ── */
-  .tag {
-    padding: 0.15rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: white;
-    display: inline-block;
-  }
-  .tag-dot {
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    display: inline-block;
-    vertical-align: middle;
-  }
+  /* BADGES */
+  .badge-visible { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.3); padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+  .badge-hidden { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
 
-  /* ── MODAL ── */
+  /* MODAL */
   .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    backdrop-filter: blur(4px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 1000; display: flex; align-items: center; justify-content: center;
+    padding: 1rem; backdrop-filter: blur(4px);
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
   }
-  .modal-overlay.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
   .modal {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    width: min(580px, 100%);
-    max-height: 90vh;
-    overflow-y: auto;
-    transform: scale(0.95);
-    transition: transform 0.2s;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 16px; width: min(580px, 100%);
+    max-height: 90vh; overflow-y: auto;
+    transform: scale(0.95); transition: transform 0.2s;
   }
   .modal-overlay.open .modal { transform: scale(1); }
-  .modal-header {
-    padding: 1.2rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+  .modal-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .modal-header h3 { font-size: 1.05rem; font-weight: 700; }
-  .modal-close {
-    background: none; border: none; color: var(--text-muted);
-    cursor: pointer; font-size: 1.3rem; padding: 0.2rem;
-    line-height: 1;
-    transition: color 0.15s;
-  }
+  .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.3rem; padding: 0.2rem; line-height: 1; transition: color 0.15s; }
   .modal-close:hover { color: var(--text); }
   .modal-body { padding: 1.5rem; }
-  .modal-footer {
-    padding: 1rem 1.5rem;
-    border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.6rem;
-  }
+  .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.6rem; }
 
-  /* ── FORM ── */
+  /* FORM */
   .form-group { margin-bottom: 1.1rem; }
-  .form-label {
-    display: block;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 0.4rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
+  .form-label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.04em; }
   .form-label.required::after { content: ' *'; color: var(--danger); }
   .form-input, .form-select, .form-textarea {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.6rem 0.8rem;
-    color: var(--text);
-    font-size: 0.9rem;
-    transition: border-color 0.15s;
-    font-family: inherit;
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.6rem 0.8rem; color: var(--text);
+    font-size: 0.9rem; transition: border-color 0.15s; font-family: inherit;
   }
-  .form-input:focus, .form-select:focus, .form-textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
-  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,127,229,0.2); }
   .form-textarea { resize: vertical; min-height: 90px; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .form-hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem; }
 
-  /* ── CHECKBOX GRID for categories ── */
-  .cat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 0.5rem;
-  }
-  .cat-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.4rem 0.6rem;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    cursor: pointer;
-    transition: all 0.15s;
-    font-size: 0.83rem;
-    background: var(--surface);
-  }
-  .cat-checkbox:hover { border-color: var(--accent); background: rgba(99,102,241,0.05); }
-  .cat-checkbox.selected {
-    background: rgba(99,102,241,0.15);
-    border-color: rgba(99,102,241,0.5);
-  }
+  /* TOGGLE SWITCH */
+  .toggle-wrap { display: flex; align-items: center; gap: 0.6rem; font-size: 0.9rem; }
+  .toggle-switch { position: relative; width: 42px; height: 22px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 999px; cursor: pointer; transition: background 0.2s; }
+  .toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.2s; }
+  .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+  .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+  /* CAT CHECKBOX GRID */
+  .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; }
+  .cat-checkbox { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; font-size: 0.83rem; background: var(--surface); }
+  .cat-checkbox:hover { border-color: var(--accent); background: rgba(29,127,229,0.05); }
+  .cat-checkbox.selected { background: rgba(29,127,229,0.15); border-color: rgba(29,127,229,0.5); }
   .cat-checkbox input { display: none; }
 
-  /* ── COLOR PICKER ── */
-  .color-picker-wrap {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
-  .form-color {
-    width: 44px; height: 36px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 2px;
-    background: var(--surface);
-    cursor: pointer;
-  }
-  .color-presets {
-    display: flex;
-    gap: 0.3rem;
-    flex-wrap: wrap;
-  }
-  .color-preset {
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: all 0.15s;
-  }
+  /* COLOR PICKER */
+  .color-picker-wrap { display: flex; align-items: center; gap: 0.6rem; }
+  .form-color { width: 44px; height: 36px; border: 1px solid var(--border); border-radius: 8px; padding: 2px; background: var(--surface); cursor: pointer; }
+  .color-presets { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+  .color-preset { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; }
   .color-preset:hover { transform: scale(1.2); }
   .color-preset.active { border-color: white; }
 
-  /* ── TOAST ── */
-  .toast-container {
-    position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    z-index: 2000;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .toast {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.8rem 1.2rem;
-    font-size: 0.88rem;
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    animation: slideIn 0.25s ease;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    min-width: 220px;
-  }
-  .toast.success { border-left: 3px solid var(--success); }
-  .toast.error { border-left: 3px solid var(--danger); }
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateX(20px); }
-    to { opacity: 1; transform: translateX(0); }
+  /* STAT BUBBLE PREVIEW */
+  .stat-bubble-preview {
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-direction: column; width: 80px; height: 80px; border-radius: 50%;
+    font-weight: 700; color: white; flex-shrink: 0;
   }
 
-  /* ── CONFIRM DIALOG ── */
-  .confirm-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 1500;
-    display: flex; align-items: center; justify-content: center;
-    padding: 1rem;
-    backdrop-filter: blur(4px);
-  }
-  .confirm-dialog {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.5rem;
-    width: min(360px, 100%);
-    text-align: center;
-  }
+  /* TOAST */
+  .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 2000; display: flex; flex-direction: column; gap: 0.5rem; }
+  .toast { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem 1.2rem; font-size: 0.88rem; display: flex; align-items: center; gap: 0.6rem; animation: slideIn 0.25s ease; box-shadow: 0 8px 24px rgba(0,0,0,0.4); min-width: 220px; }
+  .toast.success { border-left: 3px solid var(--success); }
+  .toast.error { border-left: 3px solid var(--danger); }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* CONFIRM DIALOG */
+  .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1500; display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(4px); }
+  .confirm-dialog { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; width: min(360px, 100%); text-align: center; }
   .confirm-dialog h4 { margin-bottom: 0.5rem; font-size: 1rem; }
   .confirm-dialog p { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.2rem; }
   .confirm-actions { display: flex; gap: 0.6rem; justify-content: center; }
 
-  /* ── LOADING ── */
-  .spinner {
-    width: 20px; height: 20px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    display: inline-block;
-  }
+  /* SPINNER */
+  .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-row td { text-align: center; padding: 2rem; color: var(--text-muted); }
 
-  /* ── SETUP ── */
-  .setup-card {
-    max-width: 500px;
-    margin: 4rem auto;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 2rem;
-    text-align: center;
-  }
-  .setup-card h2 { margin-bottom: 1rem; }
-  .setup-card p { color: var(--text-muted); line-height: 1.7; font-size: 0.9rem; }
-  .setup-card code {
-    background: var(--surface2);
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    font-family: monospace;
-    color: #a5b4fc;
-  }
-
-  /* ── RESPONSIVE ── */
+  /* RESPONSIVE */
   @media (max-width: 700px) {
+    .hamburger { display: block; }
     .app-layout { grid-template-columns: 1fr; }
-    .sidebar { position: fixed; left: -220px; z-index: 500; transition: left 0.25s; height: 100vh; }
-    .sidebar.open { left: 0; }
-    .main-content { padding: 1rem; }
+    .sidebar { position: fixed; left: -240px; z-index: 500; transition: left 0.25s; height: 100vh; width: 220px; }
+    .sidebar.open { left: 0; box-shadow: 4px 0 20px rgba(0,0,0,0.5); }
+    .main-content { padding: 1rem; padding-top: 3.5rem; }
     .form-row { grid-template-columns: 1fr; }
+    .page-header { flex-direction: column; align-items: flex-start; }
   }
 
   ::-webkit-scrollbar { width: 5px; }
@@ -439,12 +232,16 @@
 </head>
 <body>
 
+<button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
 <div class="app-layout">
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.2rem">後台管理</div>
       <span>陳艾倫大事紀</span>
+      <div class="sidebar-user" id="sidebarUser"></div>
     </div>
     <nav>
       <button class="nav-item active" onclick="showPage('events')" data-page="events">
@@ -453,20 +250,24 @@
       <button class="nav-item" onclick="showPage('categories')" data-page="categories">
         <span class="nav-icon">🏷️</span> 分類管理
       </button>
+      <button class="nav-item" onclick="showPage('stats')" data-page="stats">
+        <span class="nav-icon">📊</span> 數字統計管理
+      </button>
     </nav>
     <div class="sidebar-bottom">
       <a href="index.html">← 回到前台</a>
+      <button class="btn-logout" onclick="handleLogout()">⎋ 登出</button>
     </div>
   </aside>
 
-  <!-- MAIN -->
+  <!-- MAIN CONTENT -->
   <div class="main-content">
 
     <!-- EVENTS PAGE -->
     <div class="page active" id="page-events">
       <div class="page-header">
         <div class="page-title">大事紀管理 <small id="eventsCount"></small></div>
-        <div style="display:flex;gap:0.5rem">
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
           <button class="btn btn-ghost" onclick="openImportModal()">📥 批次匯入</button>
           <button class="btn btn-primary" onclick="openEventModal()">+ 新增紀事</button>
         </div>
@@ -485,7 +286,7 @@
             </tr>
           </thead>
           <tbody id="eventsTable">
-            <tr class="loading-row"><td colspan="6"><div class="spinner"></div></td></tr>
+            <tr class="loading-row"><td colspan="7"><div class="spinner"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -514,10 +315,35 @@
       </div>
     </div>
 
+    <!-- STATS PAGE -->
+    <div class="page" id="page-stats">
+      <div class="page-header">
+        <div class="page-title">數字統計管理 <small id="statsCount"></small></div>
+        <button class="btn btn-primary" onclick="openStatModal()">+ 新增統計</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:70px">預覽</th>
+              <th>標籤</th>
+              <th style="width:80px">數值</th>
+              <th style="width:80px">單位</th>
+              <th style="width:80px">顯示</th>
+              <th style="width:200px">操作</th>
+            </tr>
+          </thead>
+          <tbody id="statsTable">
+            <tr class="loading-row"><td colspan="6"><div class="spinner"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<!-- ── EVENT MODAL ── -->
+<!-- EVENT MODAL -->
 <div class="modal-overlay" id="eventModal">
   <div class="modal">
     <div class="modal-header">
@@ -535,10 +361,8 @@
           <label class="form-label">月份</label>
           <select id="eventMonth" class="form-select">
             <option value="">不指定</option>
-            <option>1</option><option>2</option><option>3</option>
-            <option>4</option><option>5</option><option>6</option>
-            <option>7</option><option>8</option><option>9</option>
-            <option>10</option><option>11</option><option>12</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+            <option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
           </select>
         </div>
         <div class="form-group">
@@ -585,7 +409,7 @@
   </div>
 </div>
 
-<!-- ── CATEGORY MODAL ── -->
+<!-- CATEGORY MODAL -->
 <div class="modal-overlay" id="catModal">
   <div class="modal">
     <div class="modal-header">
@@ -606,7 +430,7 @@
       <div class="form-group">
         <label class="form-label">顏色</label>
         <div class="color-picker-wrap">
-          <input type="color" id="catColor" class="form-color" value="#6366f1">
+          <input type="color" id="catColor" class="form-color" value="#1d7fe5">
           <div class="color-presets" id="colorPresets"></div>
         </div>
       </div>
@@ -618,7 +442,66 @@
   </div>
 </div>
 
-<!-- ── IMPORT MODAL ── -->
+<!-- STAT MODAL -->
+<div class="modal-overlay" id="statModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="statModalTitle">新增統計</h3>
+      <button class="modal-close" onclick="closeModal('statModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="statId">
+      <div style="display:flex;justify-content:center;margin-bottom:1.2rem">
+        <div class="stat-bubble-preview" id="statPreview" style="background:radial-gradient(circle at 35% 35%, #f97316, #c2410c)">
+          <span id="statPreviewNum" style="font-size:1.3rem;line-height:1;font-weight:800">0</span>
+          <span id="statPreviewLabel" style="font-size:0.6rem;opacity:0.85;margin-top:2px">標籤</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">標籤</label>
+          <input type="text" id="statLabel" class="form-input" placeholder="例：年齡、捐血次數" oninput="updateStatPreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label required">數值</label>
+          <input type="number" id="statNumber" class="form-input" placeholder="例：51" min="0" oninput="updateStatPreview()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">單位</label>
+          <input type="text" id="statUnit" class="form-input" placeholder="例：歲、次、場">
+        </div>
+        <div class="form-group">
+          <label class="form-label">排序</label>
+          <input type="number" id="statOrder" class="form-input" placeholder="0" min="0" value="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">顏色</label>
+        <div class="color-picker-wrap">
+          <input type="color" id="statColor" class="form-color" value="#f97316" oninput="updateStatPreview()">
+          <div class="color-presets" id="statColorPresets"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="toggle-wrap">
+          <label class="toggle-switch">
+            <input type="checkbox" id="statVisible" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <span>顯示在首頁</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('statModal')">取消</button>
+      <button class="btn btn-primary" id="statSaveBtn" onclick="saveStat()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
 <div class="modal-overlay" id="importModal">
   <div class="modal" style="width:min(680px,100%)">
     <div class="modal-header">
@@ -626,29 +509,30 @@
       <button class="modal-close" onclick="closeModal('importModal')">×</button>
     </div>
     <div class="modal-body">
-      <!-- Step 1: Upload -->
       <div id="importStep1">
-        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.85rem;color:var(--text-muted);line-height:1.7">
-          請使用「<strong style="color:#a5b4fc">大事紀匯入範本.xlsx</strong>」填入資料後上傳。<br>
+        <div style="background:rgba(29,127,229,0.08);border:1px solid rgba(29,127,229,0.2);border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.85rem;color:var(--text-muted);line-height:1.7">
+          請使用「<strong style="color:#7dd3fc">大事紀匯入範本.xlsx</strong>」填入資料後上傳。<br>
           欄位順序：年份* | 月份 | 日 | 標題* | 摘要* | 詳細說明 | 分類（逗號分隔） | 圖片網址<br>
-          第 1 列為標題列，第 2 列為提示列，資料從<strong style="color:#a5b4fc">第 3 列</strong>開始讀取。
+          第 1 列為標題列，第 2 列為提示列，資料從<strong style="color:#7dd3fc">第 3 列</strong>開始讀取。
         </div>
-        <div id="importDropZone" style="border:2px dashed var(--border);border-radius:12px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all 0.2s" onclick="document.getElementById('importFileInput').click()" ondragover="event.preventDefault();this.style.borderColor='#6366f1'" ondragleave="this.style.borderColor=''" ondrop="handleImportDrop(event)">
+        <div id="importDropZone" style="border:2px dashed var(--border);border-radius:12px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all 0.2s"
+          onclick="document.getElementById('importFileInput').click()"
+          ondragover="event.preventDefault();this.style.borderColor='#1d7fe5'"
+          ondragleave="this.style.borderColor=''"
+          ondrop="handleImportDrop(event)">
           <div style="font-size:2.5rem;margin-bottom:0.5rem">📂</div>
           <div style="font-weight:600;margin-bottom:0.3rem">點擊選擇或拖曳 Excel 檔案</div>
           <div style="font-size:0.82rem;color:var(--text-muted)">.xlsx / .xls 格式</div>
         </div>
         <input type="file" id="importFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleImportFile(this.files[0])">
       </div>
-
-      <!-- Step 2: Preview -->
       <div id="importStep2" style="display:none">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem">
           <div id="importSummary" style="font-size:0.88rem;color:var(--text-muted)"></div>
           <button class="btn btn-ghost btn-sm" onclick="resetImport()">← 重新選擇</button>
         </div>
         <div style="max-height:340px;overflow-y:auto;border-radius:10px;border:1px solid var(--border)">
-          <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+          <table style="width:100%;border-collapse:collapse;font-size:0.82rem;min-width:auto">
             <thead>
               <tr style="background:var(--surface2);position:sticky;top:0">
                 <th style="padding:0.5rem 0.7rem;text-align:left;width:30px">#</th>
@@ -674,40 +558,48 @@
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
 const { createClient } = supabase;
 let client = null;
+let currentUser = null;
 let allCategories = [];
 let allEvents = [];
+let allStats = [];
 
-const COLOR_PRESETS = [
-  '#2563EB','#7C3AED','#DC2626','#D97706','#DB2777',
-  '#16A34A','#0891B2','#EA580C','#65A30D','#6B7280'
-];
+const COLOR_PRESETS = ['#1d7fe5','#0ea5e9','#7C3AED','#DC2626','#D97706','#DB2777','#16A34A','#EA580C','#65A30D','#6B7280'];
+const STAT_COLORS   = ['#f97316','#f59e0b','#ef4444','#ec4899','#a855f7','#3b82f6','#22c55e','#14b8a6','#6366f1','#8b5cf6'];
 
 // ── INIT ──────────────────────────────────────────
 async function init() {
   try {
     const cfg = await getSupabaseConfig();
     client = createClient(cfg.url, cfg.anonKey);
+    const { data: { session } } = await client.auth.getSession();
+    if (!session) { location.href = 'login.html?next=admin.html'; return; }
+    currentUser = session.user;
+    document.getElementById('sidebarUser').textContent = currentUser.email;
     initColorPresets();
-    await Promise.all([loadCategories(), loadEvents()]);
+    await Promise.all([loadCategories(), loadEvents(), loadStats()]);
   } catch (err) {
     document.querySelector('.main-content').innerHTML = `
-      <div class="setup-card">
+      <div style="max-width:500px;margin:4rem auto;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;text-align:center">
         <div style="font-size:2.5rem;margin-bottom:1rem">🔒</div>
-        <h2>存取遭拒</h2>
-        <p style="color:#f87171">${err.message}</p>
+        <h2 style="margin-bottom:0.8rem">存取遭拒</h2>
+        <p style="color:#f87171">${escHtml(err.message)}</p>
       </div>`;
   }
 }
 
+async function handleLogout() {
+  await client.auth.signOut();
+  location.href = 'login.html';
+}
+
 // ── DATA ──────────────────────────────────────────
 async function loadCategories() {
-  const { data, error } = await client.from('categories').select('*').order('name');
+  const { data, error } = await client.from('categories').select('*').eq('user_id', currentUser.id).order('name');
   if (error) return showToast(error.message, 'error');
   allCategories = data || [];
   renderCatsTable();
@@ -718,6 +610,7 @@ async function loadEvents() {
   const { data, error } = await client
     .from('events')
     .select('*, event_categories(category_id, categories(*))')
+    .eq('user_id', currentUser.id)
     .order('year', { ascending: false })
     .order('month', { ascending: false, nullsFirst: false });
   if (error) return showToast(error.message, 'error');
@@ -725,36 +618,36 @@ async function loadEvents() {
   renderEventsTable();
 }
 
+async function loadStats() {
+  const { data, error } = await client.from('stats').select('*').eq('user_id', currentUser.id).order('sort_order').order('created_at');
+  if (error) return showToast(error.message, 'error');
+  allStats = data || [];
+  renderStatsTable();
+}
+
 // ── RENDER ────────────────────────────────────────
 function renderEventsTable() {
   const tbody = document.getElementById('eventsTable');
   document.getElementById('eventsCount').textContent = `(${allEvents.length} 筆)`;
-
   if (allEvents.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem">尚無資料</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem">尚無資料</td></tr>`;
     return;
   }
-
   tbody.innerHTML = allEvents.map(ev => {
     const cats = (ev.event_categories || []).map(ec => ec.categories).filter(Boolean);
-    const tagsHTML = cats.map(c =>
-      `<span class="tag" style="background:${c.color}">${c.icon || ''} ${c.name}</span>`
-    ).join(' ');
-    return `
-      <tr>
-        <td>${ev.year}</td>
-        <td>${ev.month || '—'}</td>
-        <td>${ev.day || '—'}</td>
-        <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escHtml(ev.title)}">${escHtml(ev.title)}</td>
-        <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)" title="${escHtml(ev.summary)}">${escHtml(ev.summary)}</td>
-        <td style="max-width:180px">${tagsHTML || '<span style="color:var(--text-muted)">—</span>'}</td>
-        <td>
-          <div class="td-actions">
-            <button class="btn btn-ghost btn-sm" onclick="openEventModal('${ev.id}')">✏️ 編輯</button>
-            <button class="btn btn-danger btn-sm" onclick="confirmDeleteEvent('${ev.id}')">🗑️</button>
-          </div>
-        </td>
-      </tr>`;
+    const tagsHTML = cats.map(c => `<span class="tag" style="background:${c.color}">${c.icon||''} ${c.name}</span>`).join(' ');
+    return `<tr>
+      <td>${ev.year}</td>
+      <td>${ev.month || '—'}</td>
+      <td>${ev.day || '—'}</td>
+      <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escHtml(ev.title)}">${escHtml(ev.title)}</td>
+      <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)" title="${escHtml(ev.summary)}">${escHtml(ev.summary)}</td>
+      <td style="max-width:180px">${tagsHTML || '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openEventModal('${ev.id}')">✏️ 編輯</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteEvent('${ev.id}')">🗑️</button>
+      </div></td>
+    </tr>`;
   }).join('');
 }
 
@@ -764,31 +657,56 @@ function renderCatsTable() {
     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:2rem">尚無分類</td></tr>`;
     return;
   }
-  tbody.innerHTML = allCategories.map(c => `
-    <tr>
-      <td><span class="tag-dot" style="background:${c.color}"></span></td>
-      <td style="font-size:1.2rem">${c.icon || '—'}</td>
-      <td>${escHtml(c.name)}</td>
+  tbody.innerHTML = allCategories.map(c => `<tr>
+    <td><span class="tag-dot" style="background:${c.color}"></span></td>
+    <td style="font-size:1.2rem">${c.icon || '—'}</td>
+    <td>${escHtml(c.name)}</td>
+    <td><div class="td-actions">
+      <button class="btn btn-ghost btn-sm" onclick="openCatModal('${c.id}')">✏️ 編輯</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDeleteCat('${c.id}')">🗑️</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function renderStatsTable() {
+  const tbody = document.getElementById('statsTable');
+  document.getElementById('statsCount').textContent = `(${allStats.length} 筆)`;
+  if (allStats.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem">尚無統計資料</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = allStats.map(s => {
+    const c = s.color || '#f97316';
+    const dark = darkenColor(c, 30);
+    return `<tr>
       <td>
-        <div class="td-actions">
-          <button class="btn btn-ghost btn-sm" onclick="openCatModal('${c.id}')">✏️ 編輯</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDeleteCat('${c.id}')">🗑️</button>
+        <div style="width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 35%,${c},${dark});display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;font-weight:700">
+          <span style="font-size:0.8rem;line-height:1">${s.number}</span>
+          <span style="font-size:0.45rem;opacity:0.85">${escHtml(s.label)}</span>
         </div>
       </td>
-    </tr>`).join('');
+      <td>${escHtml(s.label)}</td>
+      <td style="font-weight:700">${s.number}${s.unit ? `<span style="color:var(--text-muted);font-size:0.8rem;margin-left:2px">${escHtml(s.unit)}</span>` : ''}</td>
+      <td style="color:var(--text-muted)">${escHtml(s.unit || '—')}</td>
+      <td>${s.visible ? '<span class="badge-visible">顯示</span>' : '<span class="badge-hidden">隱藏</span>'}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openStatModal('${s.id}')">✏️ 編輯</button>
+        <button class="btn btn-${s.visible ? 'ghost' : 'primary'} btn-sm" onclick="toggleStatVisible('${s.id}',${!s.visible})">${s.visible ? '隱藏' : '顯示'}</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteStat('${s.id}')">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
 }
 
 function renderEventCatGrid() {
   const grid = document.getElementById('eventCatGrid');
   const selected = Array.from(grid.querySelectorAll('.cat-checkbox.selected')).map(el => el.dataset.id);
-
   grid.innerHTML = allCategories.map(c => `
-    <label class="cat-checkbox ${selected.includes(c.id) ? 'selected' : ''}" data-id="${c.id}">
-      <input type="checkbox" value="${c.id}" ${selected.includes(c.id) ? 'checked' : ''}>
+    <label class="cat-checkbox ${selected.includes(c.id)?'selected':''}" data-id="${c.id}">
+      <input type="checkbox" value="${c.id}" ${selected.includes(c.id)?'checked':''}>
       <span class="tag-dot" style="background:${c.color}"></span>
-      ${c.icon || ''} ${escHtml(c.name)}
+      ${c.icon||''} ${escHtml(c.name)}
     </label>`).join('');
-
   grid.querySelectorAll('.cat-checkbox').forEach(label => {
     label.addEventListener('click', () => {
       label.classList.toggle('selected');
@@ -800,18 +718,8 @@ function renderEventCatGrid() {
 // ── EVENT MODAL ───────────────────────────────────
 function openEventModal(id) {
   document.getElementById('eventModalTitle').textContent = id ? '編輯紀事' : '新增紀事';
-  document.getElementById('eventId').value = '';
-  document.getElementById('eventYear').value = '';
-  document.getElementById('eventMonth').value = '';
-  document.getElementById('eventDay').value = '';
-  document.getElementById('eventTitle').value = '';
-  document.getElementById('eventSummary').value = '';
-  document.getElementById('eventDetail').value = '';
-  document.getElementById('eventImage').value = '';
-
-  // Reset cat grid
+  ['eventId','eventYear','eventMonth','eventDay','eventTitle','eventSummary','eventDetail','eventImage'].forEach(k => document.getElementById(k).value = '');
   renderEventCatGrid();
-
   if (id) {
     const ev = allEvents.find(e => e.id === id);
     if (!ev) return;
@@ -823,7 +731,6 @@ function openEventModal(id) {
     document.getElementById('eventSummary').value = ev.summary;
     document.getElementById('eventDetail').value = ev.detail || '';
     document.getElementById('eventImage').value = ev.image_url || '';
-
     const selectedCatIds = (ev.event_categories || []).map(ec => ec.category_id);
     document.querySelectorAll('#eventCatGrid .cat-checkbox').forEach(label => {
       if (selectedCatIds.includes(label.dataset.id)) {
@@ -832,7 +739,6 @@ function openEventModal(id) {
       }
     });
   }
-
   openModal('eventModal');
 }
 
@@ -846,70 +752,38 @@ async function saveEvent() {
   const summary = document.getElementById('eventSummary').value.trim();
   const detail = document.getElementById('eventDetail').value.trim();
   const image_url = document.getElementById('eventImage').value.trim();
-
-  if (!year || !title || !summary) {
-    showToast('請填寫必要欄位（年份、標題、摘要）', 'error');
-    return;
-  }
-
-  const selectedCatIds = Array.from(
-    document.querySelectorAll('#eventCatGrid .cat-checkbox.selected')
-  ).map(el => el.dataset.id);
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> 儲存中...';
-
+  if (!year || !title || !summary) { showToast('請填寫必要欄位（年份、標題、摘要）', 'error'); return; }
+  const selectedCatIds = Array.from(document.querySelectorAll('#eventCatGrid .cat-checkbox.selected')).map(el => el.dataset.id);
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 儲存中...';
   try {
     let eventId = id;
-
     if (id) {
-      const { error } = await client.from('events').update({
-        year, month, day, title, summary,
-        detail: detail || null,
-        image_url: image_url || null
-      }).eq('id', id);
+      const { error } = await client.from('events').update({ year, month, day, title, summary, detail: detail||null, image_url: image_url||null }).eq('id', id).eq('user_id', currentUser.id);
       if (error) throw error;
     } else {
-      const { data, error } = await client.from('events').insert([{
-        year, month, day, title, summary,
-        detail: detail || null,
-        image_url: image_url || null
-      }]).select();
+      const { data, error } = await client.from('events').insert([{ year, month, day, title, summary, detail: detail||null, image_url: image_url||null, user_id: currentUser.id }]).select();
       if (error) throw error;
       eventId = data[0].id;
     }
-
-    // Update categories
     await client.from('event_categories').delete().eq('event_id', eventId);
     if (selectedCatIds.length > 0) {
-      const rows = selectedCatIds.map(cid => ({ event_id: eventId, category_id: cid }));
-      const { error } = await client.from('event_categories').insert(rows);
+      const { error } = await client.from('event_categories').insert(selectedCatIds.map(cid => ({ event_id: eventId, category_id: cid })));
       if (error) throw error;
     }
-
     showToast(id ? '紀事已更新' : '紀事已新增', 'success');
     closeModal('eventModal');
     await loadEvents();
-  } catch (err) {
-    showToast(err.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '儲存';
-  }
+  } catch (err) { showToast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.innerHTML = '儲存'; }
 }
 
 function confirmDeleteEvent(id) {
   const ev = allEvents.find(e => e.id === id);
-  showConfirm(
-    '刪除紀事',
-    `確定要刪除「${ev?.title}」嗎？此操作無法復原。`,
-    async () => {
-      const { error } = await client.from('events').delete().eq('id', id);
-      if (error) return showToast(error.message, 'error');
-      showToast('已刪除', 'success');
-      await loadEvents();
-    }
-  );
+  showConfirm('刪除紀事', `確定要刪除「${ev?.title}」嗎？此操作無法復原。`, async () => {
+    const { error } = await client.from('events').delete().eq('id', id).eq('user_id', currentUser.id);
+    if (error) return showToast(error.message, 'error');
+    showToast('已刪除', 'success'); await loadEvents();
+  });
 }
 
 // ── CATEGORY MODAL ────────────────────────────────
@@ -918,9 +792,8 @@ function openCatModal(id) {
   document.getElementById('catId').value = '';
   document.getElementById('catName').value = '';
   document.getElementById('catIcon').value = '';
-  document.getElementById('catColor').value = '#6366f1';
-  document.querySelectorAll('.color-preset').forEach(el => el.classList.remove('active'));
-
+  document.getElementById('catColor').value = '#1d7fe5';
+  document.querySelectorAll('#colorPresets .color-preset').forEach(el => el.classList.remove('active'));
   if (id) {
     const cat = allCategories.find(c => c.id === id);
     if (!cat) return;
@@ -928,11 +801,8 @@ function openCatModal(id) {
     document.getElementById('catName').value = cat.name;
     document.getElementById('catIcon').value = cat.icon || '';
     document.getElementById('catColor').value = cat.color;
-    document.querySelectorAll('.color-preset').forEach(el => {
-      if (el.dataset.color === cat.color) el.classList.add('active');
-    });
+    document.querySelectorAll('#colorPresets .color-preset').forEach(el => { if (el.dataset.color === cat.color) el.classList.add('active'); });
   }
-
   openModal('catModal');
 }
 
@@ -942,62 +812,141 @@ async function saveCategory() {
   const name = document.getElementById('catName').value.trim();
   const icon = document.getElementById('catIcon').value.trim();
   const color = document.getElementById('catColor').value;
-
   if (!name) { showToast('請填寫分類名稱', 'error'); return; }
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> 儲存中...';
-
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 儲存中...';
   try {
     if (id) {
-      const { error } = await client.from('categories').update({ name, icon, color }).eq('id', id);
+      const { error } = await client.from('categories').update({ name, icon, color }).eq('id', id).eq('user_id', currentUser.id);
       if (error) throw error;
     } else {
-      const { error } = await client.from('categories').insert([{ name, icon, color }]);
+      const { error } = await client.from('categories').insert([{ name, icon, color, user_id: currentUser.id }]);
       if (error) throw error;
     }
     showToast(id ? '分類已更新' : '分類已新增', 'success');
     closeModal('catModal');
-    await loadCategories();
-    await loadEvents(); // Refresh since categories changed
-  } catch (err) {
-    showToast(err.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '儲存';
-  }
+    await loadCategories(); await loadEvents();
+  } catch (err) { showToast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.innerHTML = '儲存'; }
 }
 
 function confirmDeleteCat(id) {
   const cat = allCategories.find(c => c.id === id);
-  showConfirm(
-    '刪除分類',
-    `確定要刪除分類「${cat?.name}」嗎？已使用此分類的紀事將移除此標籤。`,
-    async () => {
-      const { error } = await client.from('categories').delete().eq('id', id);
-      if (error) return showToast(error.message, 'error');
-      showToast('已刪除', 'success');
-      await loadCategories();
-      await loadEvents();
+  showConfirm('刪除分類', `確定要刪除分類「${cat?.name}」嗎？已使用此分類的紀事將移除此標籤。`, async () => {
+    const { error } = await client.from('categories').delete().eq('id', id).eq('user_id', currentUser.id);
+    if (error) return showToast(error.message, 'error');
+    showToast('已刪除', 'success'); await loadCategories(); await loadEvents();
+  });
+}
+
+// ── STATS MODAL ───────────────────────────────────
+function openStatModal(id) {
+  document.getElementById('statModalTitle').textContent = id ? '編輯統計' : '新增統計';
+  document.getElementById('statId').value = '';
+  document.getElementById('statLabel').value = '';
+  document.getElementById('statNumber').value = '';
+  document.getElementById('statUnit').value = '';
+  document.getElementById('statColor').value = '#f97316';
+  document.getElementById('statOrder').value = '0';
+  document.getElementById('statVisible').checked = true;
+  document.querySelectorAll('#statColorPresets .color-preset').forEach(el => el.classList.remove('active'));
+  if (id) {
+    const s = allStats.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('statId').value = s.id;
+    document.getElementById('statLabel').value = s.label;
+    document.getElementById('statNumber').value = s.number;
+    document.getElementById('statUnit').value = s.unit || '';
+    document.getElementById('statColor').value = s.color || '#f97316';
+    document.getElementById('statOrder').value = s.sort_order || 0;
+    document.getElementById('statVisible').checked = s.visible !== false;
+    document.querySelectorAll('#statColorPresets .color-preset').forEach(el => { if (el.dataset.color === s.color) el.classList.add('active'); });
+  }
+  updateStatPreview();
+  openModal('statModal');
+}
+
+function updateStatPreview() {
+  const label = document.getElementById('statLabel').value || '標籤';
+  const num = document.getElementById('statNumber').value || '0';
+  const color = document.getElementById('statColor').value || '#f97316';
+  document.getElementById('statPreviewNum').textContent = num;
+  document.getElementById('statPreviewLabel').textContent = label;
+  document.getElementById('statPreview').style.background = `radial-gradient(circle at 35% 35%, ${color}, ${darkenColor(color, 30)})`;
+}
+
+async function saveStat() {
+  const btn = document.getElementById('statSaveBtn');
+  const id = document.getElementById('statId').value;
+  const label = document.getElementById('statLabel').value.trim();
+  const number = parseInt(document.getElementById('statNumber').value);
+  const unit = document.getElementById('statUnit').value.trim();
+  const color = document.getElementById('statColor').value;
+  const sort_order = parseInt(document.getElementById('statOrder').value) || 0;
+  const visible = document.getElementById('statVisible').checked;
+  if (!label || isNaN(number)) { showToast('請填寫標籤與數值', 'error'); return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 儲存中...';
+  try {
+    if (id) {
+      const { error } = await client.from('stats').update({ label, number, unit: unit||null, color, sort_order, visible }).eq('id', id).eq('user_id', currentUser.id);
+      if (error) throw error;
+    } else {
+      const { error } = await client.from('stats').insert([{ label, number, unit: unit||null, color, sort_order, visible, user_id: currentUser.id }]);
+      if (error) throw error;
     }
-  );
+    showToast(id ? '統計已更新' : '統計已新增', 'success');
+    closeModal('statModal');
+    await loadStats();
+  } catch (err) { showToast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.innerHTML = '儲存'; }
+}
+
+async function toggleStatVisible(id, visible) {
+  const { error } = await client.from('stats').update({ visible }).eq('id', id).eq('user_id', currentUser.id);
+  if (error) return showToast(error.message, 'error');
+  showToast(visible ? '已設為顯示' : '已設為隱藏', 'success');
+  await loadStats();
+}
+
+function confirmDeleteStat(id) {
+  const s = allStats.find(x => x.id === id);
+  showConfirm('刪除統計', `確定要刪除「${s?.label}」嗎？`, async () => {
+    const { error } = await client.from('stats').delete().eq('id', id).eq('user_id', currentUser.id);
+    if (error) return showToast(error.message, 'error');
+    showToast('已刪除', 'success'); await loadStats();
+  });
 }
 
 // ── COLOR PRESETS ─────────────────────────────────
 function initColorPresets() {
-  const container = document.getElementById('colorPresets');
-  COLOR_PRESETS.forEach(color => {
+  buildColorPresets('colorPresets', COLOR_PRESETS, 'catColor', '.color-preset');
+  buildColorPresets('statColorPresets', STAT_COLORS, 'statColor', '.stat-color-preset', () => updateStatPreview());
+}
+
+function buildColorPresets(containerId, colors, inputId, selector, onChange) {
+  const container = document.getElementById(containerId);
+  colors.forEach(color => {
     const el = document.createElement('div');
-    el.className = 'color-preset';
+    el.className = 'color-preset' + (containerId === 'statColorPresets' ? ' stat-color-preset' : '');
     el.style.background = color;
     el.dataset.color = color;
     el.onclick = () => {
-      document.getElementById('catColor').value = color;
-      document.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
+      document.getElementById(inputId).value = color;
+      document.querySelectorAll(`#${containerId} .color-preset`).forEach(p => p.classList.remove('active'));
       el.classList.add('active');
+      if (onChange) onChange();
     };
     container.appendChild(el);
   });
+}
+
+// ── COLOR HELPERS ─────────────────────────────────
+function darkenColor(hex, amount) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
+  let r = Math.max(0, parseInt(hex.substring(0,2),16) - amount);
+  let g = Math.max(0, parseInt(hex.substring(2,4),16) - amount);
+  let b = Math.max(0, parseInt(hex.substring(4,6),16) - amount);
+  return '#' + [r,g,b].map(x => x.toString(16).padStart(2,'0')).join('');
 }
 
 // ── UI HELPERS ────────────────────────────────────
@@ -1006,66 +955,58 @@ function showPage(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`page-${name}`).classList.add('active');
   document.querySelector(`[data-page="${name}"]`).classList.add('active');
+  closeSidebar();
 }
 
-function openModal(id) {
-  document.getElementById(id).classList.add('open');
-  document.body.style.overflow = 'hidden';
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
 }
 
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-  document.body.style.overflow = '';
-}
+function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
 
-// Close modal on overlay click
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) closeModal(overlay.id);
-  });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(overlay.id); });
 });
 
 function showToast(msg, type = 'success') {
-  const container = document.getElementById('toastContainer');
   const el = document.createElement('div');
   el.className = `toast ${type}`;
   el.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${escHtml(msg)}`;
-  container.appendChild(el);
+  document.getElementById('toastContainer').appendChild(el);
   setTimeout(() => el.remove(), 3500);
 }
 
 function showConfirm(title, msg, onConfirm) {
   const el = document.createElement('div');
   el.className = 'confirm-overlay';
-  el.innerHTML = `
-    <div class="confirm-dialog">
-      <h4>${escHtml(title)}</h4>
-      <p>${escHtml(msg)}</p>
-      <div class="confirm-actions">
-        <button class="btn btn-ghost" id="confirmCancel">取消</button>
-        <button class="btn btn-danger" id="confirmOk">確定刪除</button>
-      </div>
-    </div>`;
+  el.innerHTML = `<div class="confirm-dialog">
+    <h4>${escHtml(title)}</h4>
+    <p>${escHtml(msg)}</p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" id="confirmCancel">取消</button>
+      <button class="btn btn-danger" id="confirmOk">確定刪除</button>
+    </div>
+  </div>`;
   document.body.appendChild(el);
   el.querySelector('#confirmCancel').onclick = () => el.remove();
-  el.querySelector('#confirmOk').onclick = async () => {
-    el.remove();
-    await onConfirm();
-  };
+  el.querySelector('#confirmOk').onclick = async () => { el.remove(); await onConfirm(); };
 }
 
 function escHtml(str) {
   if (!str) return '';
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── IMPORT ────────────────────────────────────────
 let importRows = [];
 
-function openImportModal() {
-  resetImport();
-  openModal('importModal');
-}
+function openImportModal() { resetImport(); openModal('importModal'); }
 
 function resetImport() {
   importRows = [];
@@ -1077,8 +1018,7 @@ function resetImport() {
 }
 
 function handleImportDrop(e) {
-  e.preventDefault();
-  e.currentTarget.style.borderColor = '';
+  e.preventDefault(); e.currentTarget.style.borderColor = '';
   const file = e.dataTransfer.files[0];
   if (file) handleImportFile(file);
 }
@@ -1090,22 +1030,16 @@ function handleImportFile(file) {
     try {
       const wb = XLSX.read(e.target.result, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      // Read from row 3 (skip header row 1 + hint row 2), index=0 so rows 0,1 skipped → range override
       const range = XLSX.utils.decode_range(ws['!ref']);
-      range.s.r = 2; // start from row index 2 (= Excel row 3)
-      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, range });
-      parseImportRows(rows);
-    } catch (err) {
-      showToast('Excel 解析失敗：' + err.message, 'error');
-    }
+      range.s.r = 2;
+      parseImportRows(XLSX.utils.sheet_to_json(ws, { header: 1, range }));
+    } catch (err) { showToast('Excel 解析失敗：' + err.message, 'error'); }
   };
   reader.readAsArrayBuffer(file);
 }
 
 function parseImportRows(rawRows) {
-  const errors = [];
-  importRows = [];
-
+  const errors = []; importRows = [];
   rawRows.forEach((row, i) => {
     if (!row || row.every(c => c === undefined || c === null || c === '')) return;
     const rowNum = i + 3;
@@ -1117,107 +1051,65 @@ function parseImportRows(rawRows) {
     const detail = row[5] ? String(row[5]).trim() : '';
     const catRaw = row[6] ? String(row[6]).trim() : '';
     const image_url = row[7] ? String(row[7]).trim() : '';
-
     const rowErrors = [];
     if (!year || isNaN(year)) rowErrors.push('年份必填');
     if (!title) rowErrors.push('標題必填');
     if (!summary) rowErrors.push('摘要必填');
     if (month && (month < 1 || month > 12)) rowErrors.push('月份需為 1-12');
     if (day && (day < 1 || day > 31)) rowErrors.push('日需為 1-31');
-
     const catNames = catRaw ? catRaw.split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
-    const catIds = catNames.map(name => {
-      const found = allCategories.find(c => c.name === name);
-      return found ? found.id : null;
-    });
+    const catIds = catNames.map(name => { const f = allCategories.find(c => c.name === name); return f ? f.id : null; });
     const unknownCats = catNames.filter((_, i) => !catIds[i]);
     if (unknownCats.length) rowErrors.push(`未知分類：${unknownCats.join('、')}`);
-
-    importRows.push({
-      rowNum, year, month, day, title, summary,
-      detail: detail || null, image_url: image_url || null,
-      catIds: catIds.filter(Boolean), catNames,
-      errors: rowErrors, valid: rowErrors.length === 0
-    });
+    importRows.push({ rowNum, year, month, day, title, summary, detail: detail||null, image_url: image_url||null, catIds: catIds.filter(Boolean), catNames, errors: rowErrors, valid: rowErrors.length === 0 });
     if (rowErrors.length) errors.push(`第${rowNum}列：${rowErrors.join('、')}`);
   });
-
   showImportPreview(errors);
 }
 
 function showImportPreview(errors) {
-  if (importRows.length === 0) {
-    showToast('未讀取到任何資料（請確認資料從第3列開始）', 'error');
-    return;
-  }
+  if (importRows.length === 0) { showToast('未讀取到任何資料（請確認資料從第3列開始）', 'error'); return; }
   document.getElementById('importStep1').style.display = 'none';
   document.getElementById('importStep2').style.display = '';
-
   const validCount = importRows.filter(r => r.valid).length;
   document.getElementById('importSummary').innerHTML =
     `共讀取 <strong style="color:var(--text)">${importRows.length}</strong> 筆，` +
     `可匯入 <strong style="color:#4ade80">${validCount}</strong> 筆` +
     (errors.length ? `，有錯誤 <strong style="color:#f87171">${errors.length}</strong> 筆` : '');
-
   document.getElementById('importPreviewBody').innerHTML = importRows.map(r => {
     const dateStr = [r.year, r.month, r.day].filter(Boolean).join('/');
-    const status = r.valid ? '✅' : '❌';
-    const rowStyle = r.valid ? '' : 'background:rgba(239,68,68,0.06)';
-    return `<tr style="${rowStyle}">
+    return `<tr style="${r.valid ? '' : 'background:rgba(239,68,68,0.06)'}">
       <td style="padding:0.45rem 0.7rem;color:var(--text-muted)">${r.rowNum}</td>
       <td style="padding:0.45rem 0.7rem;white-space:nowrap">${escHtml(dateStr)}</td>
       <td style="padding:0.45rem 0.7rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(r.title)}">${escHtml(r.title)}</td>
-      <td style="padding:0.45rem 0.7rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted)" title="${escHtml(r.summary)}">${escHtml(r.summary)}</td>
-      <td style="padding:0.45rem 0.7rem">${r.catNames.map(n=>`<span class="tag" style="background:${allCategories.find(c=>c.name===n)?.color||'#6b7280'}">${n}</span>`).join(' ') || '—'}</td>
-      <td style="padding:0.45rem 0.7rem;text-align:center" title="${escHtml(r.errors.join('、'))}">${status}</td>
+      <td style="padding:0.45rem 0.7rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted)">${escHtml(r.summary)}</td>
+      <td style="padding:0.45rem 0.7rem">${r.catNames.map(n=>`<span class="tag" style="background:${allCategories.find(c=>c.name===n)?.color||'#6b7280'}">${n}</span>`).join(' ')||'—'}</td>
+      <td style="padding:0.45rem 0.7rem;text-align:center" title="${escHtml(r.errors.join('、'))}">${r.valid?'✅':'❌'}</td>
     </tr>`;
   }).join('');
-
   if (errors.length) {
     document.getElementById('importErrors').style.display = '';
-    document.getElementById('importErrorList').innerHTML =
-      '⚠️ 錯誤列不會被匯入：<br>' + errors.map(e => escHtml(e)).join('<br>');
-  } else {
-    document.getElementById('importErrors').style.display = 'none';
-  }
-
-  if (validCount > 0) {
-    const btn = document.getElementById('importConfirmBtn');
-    btn.style.display = '';
-    btn.textContent = `匯入 ${validCount} 筆`;
-  }
+    document.getElementById('importErrorList').innerHTML = '⚠️ 錯誤列不會被匯入：<br>' + errors.map(e => escHtml(e)).join('<br>');
+  } else { document.getElementById('importErrors').style.display = 'none'; }
+  if (validCount > 0) { const btn = document.getElementById('importConfirmBtn'); btn.style.display = ''; btn.textContent = `匯入 ${validCount} 筆`; }
 }
 
 async function executeImport() {
   const btn = document.getElementById('importConfirmBtn');
   const validRows = importRows.filter(r => r.valid);
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> 匯入中...';
-
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 匯入中...';
   let success = 0, fail = 0;
   for (const row of validRows) {
     try {
-      const { data, error } = await client.from('events').insert([{
-        year: row.year, month: row.month, day: row.day,
-        title: row.title, summary: row.summary,
-        detail: row.detail, image_url: row.image_url
-      }]).select();
+      const { data, error } = await client.from('events').insert([{ year: row.year, month: row.month, day: row.day, title: row.title, summary: row.summary, detail: row.detail, image_url: row.image_url, user_id: currentUser.id }]).select();
       if (error) throw error;
-      const eventId = data[0].id;
-      if (row.catIds.length) {
-        await client.from('event_categories').insert(
-          row.catIds.map(cid => ({ event_id: eventId, category_id: cid }))
-        );
-      }
+      if (row.catIds.length) await client.from('event_categories').insert(row.catIds.map(cid => ({ event_id: data[0].id, category_id: cid })));
       success++;
     } catch { fail++; }
   }
-
-  btn.disabled = false;
-  btn.textContent = `匯入 ${validRows.length} 筆`;
+  btn.disabled = false; btn.textContent = `匯入 ${validRows.length} 筆`;
   showToast(`匯入完成：成功 ${success} 筆${fail ? `，失敗 ${fail} 筆` : ''}`, success > 0 ? 'success' : 'error');
-  closeModal('importModal');
-  await loadEvents();
+  closeModal('importModal'); await loadEvents();
 }
 
 init();

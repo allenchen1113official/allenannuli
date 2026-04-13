@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登入 · 陳艾倫大事紀</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #020c1b;
+    color: #e0eeff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    overflow: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 20%, rgba(29,127,229,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 80% 80%, rgba(14,165,233,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .login-card {
+    background: #0a1929;
+    border: 1px solid #1a3a5c;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 420px;
+    padding: 2.5rem 2rem;
+    position: relative;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+
+  .logo {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .logo-name {
+    font-size: 1.8rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #e0eeff 0%, #7dd3fc 50%, #1d7fe5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+  }
+  .logo-sub {
+    font-size: 0.82rem;
+    color: #7bafd4;
+    margin-top: 0.3rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .tab-bar {
+    display: flex;
+    background: #0d2137;
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 1.8rem;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 0.55rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #7bafd4;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: #1d7fe5;
+    color: white;
+    box-shadow: 0 2px 8px rgba(29,127,229,0.4);
+  }
+
+  .form-group { margin-bottom: 1.1rem; }
+  .form-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #7bafd4;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .form-input {
+    width: 100%;
+    background: #0d2137;
+    border: 1px solid #1a3a5c;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: #e0eeff;
+    font-size: 0.95rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+    -webkit-appearance: none;
+  }
+  .form-input:focus {
+    outline: none;
+    border-color: #1d7fe5;
+    box-shadow: 0 0 0 3px rgba(29,127,229,0.2);
+  }
+  .form-input::placeholder { color: #3a6a8a; }
+
+  .btn-submit {
+    width: 100%;
+    padding: 0.85rem;
+    background: linear-gradient(135deg, #1d7fe5, #0ea5e9);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 0.5rem;
+    letter-spacing: 0.03em;
+  }
+  .btn-submit:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(29,127,229,0.4); }
+  .btn-submit:active { transform: none; }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 1.2rem 0;
+    color: #3a6a8a;
+    font-size: 0.8rem;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #1a3a5c;
+  }
+
+  .msg {
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    display: none;
+    line-height: 1.5;
+  }
+  .msg.error { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+  .msg.success { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
+  .msg.show { display: block; }
+
+  .forgot-link {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.83rem;
+    color: #7bafd4;
+  }
+  .forgot-link a { color: #38bdf8; text-decoration: none; cursor: pointer; }
+  .forgot-link a:hover { text-decoration: underline; }
+
+  .spinner-inline {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .back-home {
+    position: absolute;
+    top: 1.2rem; left: 1.5rem;
+    color: #7bafd4;
+    font-size: 0.82rem;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: color 0.15s;
+  }
+  .back-home:hover { color: #38bdf8; }
+</style>
+</head>
+<body>
+<div class="login-card">
+  <a href="index.html" class="back-home">← 首頁</a>
+
+  <div class="logo">
+    <div class="logo-name">陳艾倫大事紀</div>
+    <div class="logo-sub">Personal Timeline</div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">登入</button>
+    <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">註冊</button>
+  </div>
+
+  <div id="msgBox" class="msg"></div>
+
+  <!-- LOGIN FORM -->
+  <form id="loginForm" onsubmit="handleLogin(event)">
+    <div class="form-group">
+      <label class="form-label">電子郵件</label>
+      <input type="email" id="loginEmail" class="form-input" placeholder="your@email.com" required autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label">密碼</label>
+      <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn-submit" id="loginBtn">登入</button>
+    <div class="forgot-link">
+      <a onclick="handleForgotPassword()">忘記密碼？</a>
+    </div>
+  </form>
+
+  <!-- REGISTER FORM -->
+  <form id="registerForm" style="display:none" onsubmit="handleRegister(event)">
+    <div class="form-group">
+      <label class="form-label">電子郵件</label>
+      <input type="email" id="regEmail" class="form-input" placeholder="your@email.com" required autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label">密碼（至少 6 位）</label>
+      <input type="password" id="regPassword" class="form-input" placeholder="••••••••" required autocomplete="new-password" minlength="6">
+    </div>
+    <div class="form-group">
+      <label class="form-label">確認密碼</label>
+      <input type="password" id="regPassword2" class="form-input" placeholder="••••••••" required autocomplete="new-password">
+    </div>
+    <button type="submit" class="btn-submit" id="registerBtn">建立帳號</button>
+  </form>
+</div>
+
+<script>
+const { createClient } = supabase;
+let client = null;
+
+async function init() {
+  const cfg = await getSupabaseConfig();
+  client = createClient(cfg.url, cfg.anonKey);
+  // If already logged in, redirect
+  const { data: { session } } = await client.auth.getSession();
+  if (session) {
+    const redir = new URLSearchParams(location.search).get('next') || 'index.html';
+    location.href = redir;
+  }
+}
+
+function switchTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('tabLogin').classList.toggle('active', isLogin);
+  document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+  document.getElementById('loginForm').style.display = isLogin ? '' : 'none';
+  document.getElementById('registerForm').style.display = isLogin ? 'none' : '';
+  hideMsg();
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msgBox');
+  el.textContent = text;
+  el.className = `msg ${type} show`;
+}
+function hideMsg() {
+  document.getElementById('msgBox').className = 'msg';
+}
+
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-inline"></span>處理中...';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btnId === 'loginBtn' ? '登入' : '建立帳號';
+  }
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  hideMsg();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  setLoading('loginBtn', true);
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  setLoading('loginBtn', false);
+  if (error) {
+    showMsg(error.message === 'Invalid login credentials' ? '電子郵件或密碼錯誤' : error.message, 'error');
+  } else {
+    const redir = new URLSearchParams(location.search).get('next') || 'index.html';
+    location.href = redir;
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  hideMsg();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass1 = document.getElementById('regPassword').value;
+  const pass2 = document.getElementById('regPassword2').value;
+  if (pass1 !== pass2) { showMsg('兩次密碼不一致', 'error'); return; }
+  setLoading('registerBtn', true);
+  const { error } = await client.auth.signUp({ email, password: pass1 });
+  setLoading('registerBtn', false);
+  if (error) {
+    showMsg(error.message, 'error');
+  } else {
+    showMsg('帳號已建立！請至信箱確認驗證郵件後再登入。', 'success');
+    switchTab('login');
+    document.getElementById('loginEmail').value = email;
+  }
+}
+
+async function handleForgotPassword() {
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) { showMsg('請先填寫電子郵件地址', 'error'); return; }
+  const { error } = await client.auth.resetPasswordForEmail(email);
+  if (error) showMsg(error.message, 'error');
+  else showMsg('重設密碼郵件已寄出，請查收信箱。', 'success');
+}
+
+init();
+</script>
+</body>
+</html>

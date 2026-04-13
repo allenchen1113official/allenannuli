@@ -361,10 +361,11 @@
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    gap: 2.2rem;
+    gap: clamp(1rem, 4vw, 2.2rem);
     margin-top: 1.8rem;
     margin-bottom: 0.5rem;
-    padding-bottom: 0.2rem;
+    flex-wrap: wrap;
+    padding: 0 1rem 0.2rem;
   }
   .stat-circle {
     display: flex;
@@ -382,10 +383,9 @@
     transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
     cursor: default;
     box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    flex-shrink: 0;
   }
-  .stat-bubble:hover {
-    transform: translateY(-6px) scale(1.05);
-  }
+  .stat-bubble:hover { transform: translateY(-6px) scale(1.05); }
   .stat-bubble::after {
     content: '';
     position: absolute;
@@ -394,24 +394,6 @@
     background: rgba(255,255,255,0.07);
     pointer-events: none;
   }
-  /* 94 捐血 – 最大 196px – 深紅 */
-  .stat-bubble.blood {
-    width: 196px; height: 196px;
-    background: radial-gradient(circle at 35% 35%, #FF6B6B, #C0392B 60%, #922B21);
-    box-shadow: 0 8px 40px rgba(192,57,43,0.45);
-  }
-  /* 51 年齡 – 中 168px – 琥珀金 */
-  .stat-bubble.age {
-    width: 168px; height: 168px;
-    background: radial-gradient(circle at 35% 35%, #FFD166, #E67E22 60%, #B7540B);
-    box-shadow: 0 8px 36px rgba(230,126,34,0.4);
-  }
-  /* 3 馬拉松 – 最小 112px – 橘 */
-  .stat-bubble.marathon {
-    width: 112px; height: 112px;
-    background: radial-gradient(circle at 35% 35%, #FFAB76, #E84C00 60%, #A83200);
-    box-shadow: 0 8px 28px rgba(232,76,0,0.4);
-  }
   .stat-num {
     font-weight: 900;
     color: #fff;
@@ -419,31 +401,60 @@
     letter-spacing: -0.03em;
     text-shadow: 0 2px 8px rgba(0,0,0,0.25);
   }
-  .stat-bubble.blood   .stat-num { font-size: 3rem; }
-  .stat-bubble.age     .stat-num { font-size: 2.4rem; }
-  .stat-bubble.marathon .stat-num { font-size: 1.6rem; }
   .stat-unit-inside {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 700;
     color: rgba(255,255,255,0.75);
-    margin-top: 0.1rem;
+    margin-top: 0.15rem;
     letter-spacing: 0.04em;
   }
   .stat-label {
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
     letter-spacing: 0.06em;
     text-transform: uppercase;
+    text-align: center;
+    max-width: 120px;
   }
-  @media (max-width: 520px) {
-    .stats-bar { gap: 1.2rem; }
-    .stat-bubble.blood    { width: 148px; height: 148px; }
-    .stat-bubble.age      { width: 126px; height: 126px; }
-    .stat-bubble.marathon { width: 86px;  height: 86px;  }
-    .stat-bubble.blood    .stat-num { font-size: 2.2rem; }
-    .stat-bubble.age      .stat-num { font-size: 1.8rem; }
-    .stat-bubble.marathon .stat-num { font-size: 1.2rem; }
+
+  /* ── RWD header ── */
+  @media (max-width: 480px) {
+    header { padding: 2.5rem 1rem 1.5rem; }
+    .header-admin { top: 1rem; right: 1rem; font-size: 0.78rem; padding: 0.3rem 0.75rem; }
+    .header-sub { font-size: 0.82rem; letter-spacing: 0.05em; }
   }
+
+  /* ── RWD timeline ── */
+  @media (max-width: 600px) {
+    .timeline::before { left: 52px; }
+    .event-item { grid-template-columns: 52px auto; }
+    .year-label span { width: 44px; font-size: 1rem; }
+    .year-label { top: 60px; }
+    main { padding: 2rem 0.75rem 5rem; }
+  }
+  @media (max-width: 380px) {
+    .timeline::before { left: 40px; }
+    .event-item { grid-template-columns: 40px auto; }
+    .year-label span { width: 34px; font-size: 0.9rem; }
+  }
+
+  /* ── Touch popup (mobile) ── */
+  .event-card.tapped { border-color: rgba(29,127,229,0.5); }
+  .detail-popup.pinned { pointer-events: auto; }
+  .detail-popup.pinned .popup-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0.6rem; right: 0.7rem;
+    width: 26px; height: 26px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  .popup-close { display: none; }
 
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
@@ -454,32 +465,10 @@
 <body>
 
 <header>
-  <a href="admin.html" class="header-admin">後台管理 →</a>
-  <div class="header-name">陳艾倫</div>
-  <div class="header-sub">Allen Chen &nbsp;·&nbsp; 人生大事紀 1975 – 2026</div>
-  <div class="stats-bar">
-    <div class="stat-circle">
-      <div class="stat-bubble age">
-        <div class="stat-num">51</div>
-        <div class="stat-unit-inside">歲</div>
-      </div>
-      <div class="stat-label">年齡</div>
-    </div>
-    <div class="stat-circle">
-      <div class="stat-bubble blood">
-        <div class="stat-num">94</div>
-        <div class="stat-unit-inside">次</div>
-      </div>
-      <div class="stat-label">捐血</div>
-    </div>
-    <div class="stat-circle">
-      <div class="stat-bubble marathon">
-        <div class="stat-num">3</div>
-        <div class="stat-unit-inside">場</div>
-      </div>
-      <div class="stat-label">全程馬拉松</div>
-    </div>
-  </div>
+  <a href="admin.html" class="header-admin" id="adminLink">後台管理 →</a>
+  <div class="header-name" id="headerName">陳艾倫</div>
+  <div class="header-sub" id="headerSub">Allen Chen &nbsp;·&nbsp; 人生大事紀 1975 – 2026</div>
+  <div class="stats-bar" id="statsBar"></div>
 </header>
 
 <div class="filter-bar" id="filterBar">
@@ -500,168 +489,217 @@
 <script>
 const { createClient } = supabase;
 let client = null;
+let currentUser = null;
 let allEvents = [];
 let allCategories = [];
+let allStats = [];
 let activeFilter = 'all';
-let popupTimer = null;
+const isMobile = () => window.innerWidth <= 768 || 'ontouchstart' in window;
 
+// ── INIT ─────────────────────────────────────────
 async function initSupabase() {
   const cfg = await getSupabaseConfig();
   client = createClient(cfg.url, cfg.anonKey);
 }
 
-async function loadCategories() {
-  if (!client) return [];
-  const { data } = await client.from('categories').select('*').order('name');
-  return data || [];
-}
-
-async function loadEvents() {
-  if (!client) return [];
-  const { data } = await client
-    .from('events')
+async function loadData(userId) {
+  const evQ = client.from('events')
     .select(`*, event_categories(category_id, categories(*))`)
+    .eq('user_id', userId)
     .order('year', { ascending: false })
     .order('month', { ascending: false, nullsFirst: false })
     .order('sort_order', { ascending: false });
-  return data || [];
+
+  const catQ = client.from('categories').select('*').eq('user_id', userId).order('name');
+  const statQ = client.from('stats').select('*').eq('user_id', userId)
+    .eq('visible', true).order('sort_order');
+
+  const [ev, cat, st] = await Promise.all([evQ, catQ, statQ]);
+  allEvents = ev.data || [];
+  allCategories = cat.data || [];
+  allStats = st.data || [];
 }
 
-function renderFilterBar(categories) {
+// ── RENDER STATS ──────────────────────────────────
+function renderStats() {
+  const bar = document.getElementById('statsBar');
+  if (!allStats.length) { bar.innerHTML = ''; return; }
+
+  const maxNum = Math.max(...allStats.map(s => Number(s.number)));
+  const MAX_PX = Math.min(window.innerWidth <= 480 ? 130 : 180, 180);
+  const MIN_PX = window.innerWidth <= 480 ? 72 : 90;
+
+  bar.innerHTML = allStats.map(s => {
+    const ratio = maxNum > 0 ? Math.sqrt(Number(s.number) / maxNum) : 1;
+    const size = Math.round(MIN_PX + (MAX_PX - MIN_PX) * ratio);
+    const fontSize = Math.round(size * 0.28);
+    const unitSize = Math.round(size * 0.13);
+    return `
+      <div class="stat-circle">
+        <div class="stat-bubble" style="
+          width:${size}px;height:${size}px;
+          background:radial-gradient(circle at 35% 35%, ${lighten(s.color)}, ${s.color} 60%, ${darken(s.color)});
+          box-shadow:0 8px 32px ${s.color}55;
+        ">
+          <div class="stat-num" style="font-size:${fontSize}px">${escHtml(String(s.number))}</div>
+          <div class="stat-unit-inside" style="font-size:${unitSize}px">${escHtml(s.unit)}</div>
+        </div>
+        <div class="stat-label">${escHtml(s.label)}</div>
+      </div>`;
+  }).join('');
+}
+
+function lighten(hex) {
+  return hex.replace(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i, (_, r, g, b) => {
+    const l = v => Math.min(255, parseInt(v,16) + 80).toString(16).padStart(2,'0');
+    return `#${l(r)}${l(g)}${l(b)}`;
+  });
+}
+function darken(hex) {
+  return hex.replace(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i, (_, r, g, b) => {
+    const d = v => Math.max(0, parseInt(v,16) - 40).toString(16).padStart(2,'0');
+    return `#${d(r)}${d(g)}${d(b)}`;
+  });
+}
+
+// ── RENDER FILTER BAR ─────────────────────────────
+function renderFilterBar() {
   const bar = document.getElementById('filterBar');
-  categories.forEach(cat => {
+  // keep "全部" button, remove old cat buttons
+  bar.querySelectorAll('.filter-btn:not(.all)').forEach(b => b.remove());
+  allCategories.forEach(cat => {
     const btn = document.createElement('button');
     btn.className = 'filter-btn';
     btn.dataset.id = cat.id;
     btn.innerHTML = `${cat.icon || ''} ${cat.name}`;
-    btn.style.setProperty('--cat-color', cat.color);
-    btn.addEventListener('click', () => setFilter(cat.id, btn));
+    btn.addEventListener('click', () => {
+      activeFilter = cat.id;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTimeline();
+    });
     bar.appendChild(btn);
   });
 }
 
-function setFilter(id, btn) {
-  activeFilter = id;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderTimeline();
-}
-
+// ── RENDER TIMELINE ───────────────────────────────
 function getEventCategories(event) {
   return (event.event_categories || []).map(ec => ec.categories).filter(Boolean);
 }
 
 function filterEvents(events) {
   if (activeFilter === 'all') return events;
-  return events.filter(ev =>
-    getEventCategories(ev).some(cat => cat.id === activeFilter)
-  );
+  return events.filter(ev => getEventCategories(ev).some(cat => cat.id === activeFilter));
 }
 
 function renderTimeline() {
   const container = document.getElementById('timelineContainer');
   const filtered = filterEvents(allEvents);
-
   if (filtered.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">📭</div>
         <div>目前沒有紀事</div>
-        <div style="font-size:0.85rem;margin-top:0.5rem;">
-          請至<a href="admin.html" style="color:#7dd3fc;">後台管理</a>新增大事紀
+        <div style="font-size:0.85rem;margin-top:0.5rem">
+          請至<a href="admin.html" style="color:#7dd3fc">後台管理</a>新增大事紀
         </div>
       </div>`;
     return;
   }
-
-  // Group by year
   const byYear = {};
-  filtered.forEach(ev => {
-    if (!byYear[ev.year]) byYear[ev.year] = [];
-    byYear[ev.year].push(ev);
-  });
-
-  const years = Object.keys(byYear).sort((a, b) => b - a);
-
+  filtered.forEach(ev => { (byYear[ev.year] = byYear[ev.year] || []).push(ev); });
+  const years = Object.keys(byYear).sort((a,b) => b - a);
   container.innerHTML = years.map(year => `
     <div class="year-group">
       <div class="year-label"><span>${year}</span></div>
       ${byYear[year].map(ev => renderEventCard(ev)).join('')}
-    </div>
-  `).join('');
+    </div>`).join('');
 
-  // Attach hover listeners
   container.querySelectorAll('.event-item').forEach(item => {
     const card = item.querySelector('.event-card');
-    const eventId = item.dataset.eventId;
-    const event = allEvents.find(e => e.id === eventId);
+    const event = allEvents.find(e => e.id === item.dataset.eventId);
     if (!event) return;
-
-    card.addEventListener('mouseenter', (e) => showPopup(e, event));
-    card.addEventListener('mousemove', (e) => movePopup(e));
-    card.addEventListener('mouseleave', hidePopup);
+    if (isMobile()) {
+      card.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const popup = document.getElementById('detailPopup');
+        if (popup.classList.contains('pinned') && popup.dataset.eventId === event.id) {
+          hidePopup(); return;
+        }
+        showPopupPinned(event);
+      });
+    } else {
+      card.addEventListener('mouseenter', e => showPopup(e, event));
+      card.addEventListener('mousemove', e => movePopup(e));
+      card.addEventListener('mouseleave', hidePopup);
+    }
   });
+
+  document.addEventListener('click', () => {
+    const popup = document.getElementById('detailPopup');
+    if (popup.classList.contains('pinned')) hidePopup();
+  }, { once: false });
 }
 
 function renderEventCard(ev) {
   const cats = getEventCategories(ev);
   const tagsHTML = cats.map(c =>
-    `<span class="tag" style="background:${c.color}">${c.icon || ''} ${c.name}</span>`
-  ).join('');
-  const dateParts = [ev.month ? `${ev.month}月` : '', ev.day ? `${ev.day}日` : ''].filter(Boolean);
-  const dateStr = dateParts.join('');
-
+    `<span class="tag" style="background:${c.color}">${c.icon||''} ${c.name}</span>`).join('');
+  const dateStr = [ev.month?`${ev.month}月`:'', ev.day?`${ev.day}日`:''].filter(Boolean).join('');
   return `
     <div class="event-item" data-event-id="${ev.id}">
       <div class="event-dot"></div>
       <div class="event-card">
         <div class="event-header">
           <div class="event-title">${escHtml(ev.title)}</div>
-          ${dateStr ? `<div class="event-month">${dateStr}</div>` : ''}
+          ${dateStr?`<div class="event-month">${dateStr}</div>`:''}
         </div>
-        ${tagsHTML ? `<div class="event-tags">${tagsHTML}</div>` : ''}
+        ${tagsHTML?`<div class="event-tags">${tagsHTML}</div>`:''}
         <div class="event-summary">${escHtml(ev.summary)}</div>
       </div>
     </div>`;
 }
 
-function showPopup(e, event) {
+// ── POPUP ─────────────────────────────────────────
+function buildPopupHTML(event) {
   const cats = getEventCategories(event);
-  const popup = document.getElementById('detailPopup');
-
   const tagsHTML = cats.map(c =>
-    `<span class="tag" style="background:${c.color}">${c.icon || ''} ${c.name}</span>`
-  ).join('');
-
-  const monthStr = [
-    `${event.year}年`,
-    event.month ? `${event.month}月` : '',
-    event.day ? `${event.day}日` : ''
-  ].join('');
-  const imgHTML = event.image_url
-    ? `<img src="${escHtml(event.image_url)}" class="popup-image" alt="" loading="lazy">`
-    : '';
-
-  popup.innerHTML = `
-    <div class="popup-year-title">${monthStr}</div>
+    `<span class="tag" style="background:${c.color}">${c.icon||''} ${c.name}</span>`).join('');
+  const dateStr = [`${event.year}年`, event.month?`${event.month}月`:'', event.day?`${event.day}日`:''].join('');
+  const imgHTML = event.image_url ? `<img src="${escHtml(event.image_url)}" class="popup-image" alt="" loading="lazy">` : '';
+  return `
+    <div class="popup-close" onclick="hidePopup()">✕</div>
+    <div class="popup-year-title">${dateStr}</div>
     <div class="popup-title">${escHtml(event.title)}</div>
-    ${tagsHTML ? `<div class="popup-tags">${tagsHTML}</div>` : ''}
+    ${tagsHTML?`<div class="popup-tags">${tagsHTML}</div>`:''}
     <div class="popup-detail">${escHtml(event.detail || event.summary)}</div>
-    ${imgHTML}
-  `;
+    ${imgHTML}`;
+}
 
+function showPopup(e, event) {
+  const popup = document.getElementById('detailPopup');
+  popup.dataset.eventId = event.id;
+  popup.innerHTML = buildPopupHTML(event);
+  popup.classList.remove('pinned');
   movePopup(e);
   popup.classList.add('visible');
 }
 
+function showPopupPinned(event) {
+  const popup = document.getElementById('detailPopup');
+  popup.dataset.eventId = event.id;
+  popup.innerHTML = buildPopupHTML(event);
+  popup.classList.add('visible', 'pinned');
+  // Center on screen for mobile
+  popup.style.left = Math.max(8, (window.innerWidth - popup.offsetWidth) / 2) + 'px';
+  popup.style.top = Math.max(70, window.scrollY + (window.innerHeight - 400) / 2) + 'px';
+}
+
 function movePopup(e) {
   const popup = document.getElementById('detailPopup');
-  const pw = popup.offsetWidth;
-  const ph = popup.offsetHeight;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  let x = e.clientX + 16;
-  let y = e.clientY + 16;
+  const pw = popup.offsetWidth, ph = popup.offsetHeight;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let x = e.clientX + 16, y = e.clientY + 16;
   if (x + pw > vw - 12) x = e.clientX - pw - 16;
   if (y + ph > vh - 12) y = e.clientY - ph - 16;
   popup.style.left = Math.max(8, x) + 'px';
@@ -669,7 +707,8 @@ function movePopup(e) {
 }
 
 function hidePopup() {
-  document.getElementById('detailPopup').classList.remove('visible');
+  const popup = document.getElementById('detailPopup');
+  popup.classList.remove('visible', 'pinned');
 }
 
 function escHtml(str) {
@@ -677,23 +716,28 @@ function escHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function showSetupBanner() {
-  document.getElementById('timelineContainer').innerHTML = `
-    <div class="setup-banner">
-      <h3>⚙️ 尚未設定 Supabase</h3>
-      <p>
-        請開啟 <code>config.js</code> 並填入您的 Supabase URL 及 API Key。<br>
-        接著在 Supabase SQL Editor 執行 <code>schema.sql</code> 建立資料表。<br><br>
-        設定完成後，請至<a href="admin.html" style="color:#7dd3fc;"> 後台管理 </a>新增大事紀資料。
-      </p>
-    </div>`;
-}
-
+// ── MAIN INIT ─────────────────────────────────────
 async function init() {
   try {
     await initSupabase();
-    [allCategories, allEvents] = await Promise.all([loadCategories(), loadEvents()]);
-    renderFilterBar(allCategories);
+    const { data: { session } } = await client.auth.getSession();
+    currentUser = session?.user || null;
+
+    if (!currentUser) {
+      document.getElementById('adminLink').href = 'login.html?next=admin.html';
+      document.getElementById('headerName').textContent = '陳艾倫';
+      document.getElementById('timelineContainer').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🔒</div>
+          <div style="margin-bottom:0.8rem">請登入以查看大事紀</div>
+          <a href="login.html" style="background:linear-gradient(135deg,#1d7fe5,#0ea5e9);color:#fff;padding:0.6rem 1.5rem;border-radius:999px;text-decoration:none;font-weight:600">登入</a>
+        </div>`;
+      return;
+    }
+
+    await loadData(currentUser.id);
+    renderStats();
+    renderFilterBar();
     renderTimeline();
 
     document.querySelector('.filter-btn.all').addEventListener('click', function() {
@@ -702,12 +746,14 @@ async function init() {
       this.classList.add('active');
       renderTimeline();
     });
+
+    window.addEventListener('resize', renderStats);
   } catch (err) {
     console.error(err);
     document.getElementById('timelineContainer').innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">⚠️</div>
-        <div>載入失敗：${err.message}</div>
+        <div>載入失敗：${escHtml(err.message)}</div>
       </div>`;
   }
 }

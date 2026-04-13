@@ -3,18 +3,20 @@
 -- 請至 Supabase SQL Editor 執行此檔案
 -- =============================================
 
--- 分類表
+-- 分類表（加入 user_id 支援多用戶）
 CREATE TABLE IF NOT EXISTS categories (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL UNIQUE,
-  color TEXT NOT NULL DEFAULT '#4A90E2',
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  color TEXT NOT NULL DEFAULT '#1d7fe5',
   icon TEXT DEFAULT '📌',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 大事紀表
+-- 大事紀表（加入 user_id 支援多用戶）
 CREATE TABLE IF NOT EXISTS events (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   year INTEGER NOT NULL,
   month INTEGER,
   day INTEGER CHECK (day >= 1 AND day <= 31),
@@ -34,19 +36,18 @@ CREATE TABLE IF NOT EXISTS event_categories (
   PRIMARY KEY (event_id, category_id)
 );
 
--- 預設分類資料
-INSERT INTO categories (name, color, icon) VALUES
-  ('職涯', '#2563EB', '💼'),
-  ('學習', '#7C3AED', '📚'),
-  ('親情', '#DC2626', '❤️'),
-  ('友情', '#D97706', '🤝'),
-  ('愛情', '#DB2777', '💕'),
-  ('運動', '#16A34A', '🏃'),
-  ('音樂', '#0891B2', '🎵'),
-  ('旅遊', '#EA580C', '✈️'),
-  ('健康', '#65A30D', '🏥'),
-  ('其他', '#6B7280', '📌')
-ON CONFLICT (name) DO NOTHING;
+-- 數字統計表（首頁圓形數字）
+CREATE TABLE IF NOT EXISTS stats (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  number INTEGER NOT NULL DEFAULT 0,
+  unit TEXT,
+  color TEXT DEFAULT '#f97316',
+  visible BOOLEAN DEFAULT TRUE,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 -- 更新時間觸發器
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -63,17 +64,44 @@ CREATE TRIGGER update_events_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- RLS 政策（允許匿名讀取，授權後才能寫入）
+-- RLS 政策（每個使用者只能存取自己的資料）
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stats ENABLE ROW LEVEL SECURITY;
 
--- 允許所有人讀取
-CREATE POLICY "Allow public read categories" ON categories FOR SELECT USING (true);
-CREATE POLICY "Allow public read events" ON events FOR SELECT USING (true);
-CREATE POLICY "Allow public read event_categories" ON event_categories FOR SELECT USING (true);
+-- 先移除舊政策（若存在）
+DROP POLICY IF EXISTS "Allow public read categories" ON categories;
+DROP POLICY IF EXISTS "Allow public read events" ON events;
+DROP POLICY IF EXISTS "Allow public read event_categories" ON event_categories;
+DROP POLICY IF EXISTS "Allow all write categories" ON categories;
+DROP POLICY IF EXISTS "Allow all write events" ON events;
+DROP POLICY IF EXISTS "Allow all write event_categories" ON event_categories;
 
--- 允許所有人寫入（後台管理用，若需要驗證可改為 auth.role() = 'authenticated'）
-CREATE POLICY "Allow all write categories" ON categories FOR ALL USING (true);
-CREATE POLICY "Allow all write events" ON events FOR ALL USING (true);
-CREATE POLICY "Allow all write event_categories" ON event_categories FOR ALL USING (true);
+-- categories：已登入者只能存取自己的分類
+CREATE POLICY "Users manage own categories" ON categories
+  FOR ALL USING (auth.uid() = user_id);
+
+-- events：已登入者只能存取自己的大事紀
+CREATE POLICY "Users manage own events" ON events
+  FOR ALL USING (auth.uid() = user_id);
+
+-- event_categories：透過 event 的 user_id 控制
+CREATE POLICY "Users manage own event_categories" ON event_categories
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM events
+      WHERE events.id = event_categories.event_id
+        AND events.user_id = auth.uid()
+    )
+  );
+
+-- stats：已登入者只能存取自己的統計
+CREATE POLICY "Users manage own stats" ON stats
+  FOR ALL USING (auth.uid() = user_id);
+
+-- =============================================
+-- 若需要將舊資料（無 user_id）遷移，請手動執行：
+-- UPDATE events SET user_id = '<your-user-uuid>' WHERE user_id IS NULL;
+-- UPDATE categories SET user_id = '<your-user-uuid>' WHERE user_id IS NULL;
+-- =============================================
