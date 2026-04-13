@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>後台管理 · 陳艾倫大事紀</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1e1e2e;
+    --surface3: #252535;
+    --border: #2a2a3e;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --warning: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── LAYOUT ── */
+  .app-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 1rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-logo {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    padding: 0 0.5rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .sidebar-logo span {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    margin-bottom: 0.2rem;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+  .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+  .sidebar-bottom {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .sidebar-bottom a {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.75rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    transition: all 0.15s;
+  }
+  .sidebar-bottom a:hover { background: var(--surface2); color: var(--text); }
+
+  /* ── MAIN CONTENT ── */
+  .main-content {
+    padding: 2rem;
+    overflow-y: auto;
+  }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .page-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+  .page-title small {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-left: 0.5rem;
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    padding: 0.5rem 1.1rem;
+    border-radius: 8px;
+    font-size: 0.87rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--surface3); }
+  .btn-danger { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .btn-danger:hover { background: rgba(239,68,68,0.25); }
+  .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    background: var(--surface2);
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  td {
+    padding: 0.8rem 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.88rem;
+    vertical-align: middle;
+  }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .td-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+  /* ── TAGS IN TABLE ── */
+  .tag {
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: white;
+    display: inline-block;
+  }
+  .tag-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .modal {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: min(580px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.95);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: scale(1); }
+  .modal-header {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-header h3 { font-size: 1.05rem; font-weight: 700; }
+  .modal-close {
+    background: none; border: none; color: var(--text-muted);
+    cursor: pointer; font-size: 1.3rem; padding: 0.2rem;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 1.5rem; }
+  .modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+  }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 1.1rem; }
+  .form-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .form-label.required::after { content: ' *'; color: var(--danger); }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    color: var(--text);
+    font-size: 0.9rem;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+  }
+  .form-textarea { resize: vertical; min-height: 90px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem; }
+
+  /* ── CHECKBOX GRID for categories ── */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.5rem;
+  }
+  .cat-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.83rem;
+    background: var(--surface);
+  }
+  .cat-checkbox:hover { border-color: var(--accent); background: rgba(99,102,241,0.05); }
+  .cat-checkbox.selected {
+    background: rgba(99,102,241,0.15);
+    border-color: rgba(99,102,241,0.5);
+  }
+  .cat-checkbox input { display: none; }
+
+  /* ── COLOR PICKER ── */
+  .color-picker-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .form-color {
+    width: 44px; height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2px;
+    background: var(--surface);
+    cursor: pointer;
+  }
+  .color-presets {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+  }
+  .color-preset {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .color-preset:hover { transform: scale(1.2); }
+  .color-preset.active { border-color: white; }
+
+  /* ── TOAST ── */
+  .toast-container {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 1.2rem;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    animation: slideIn 0.25s ease;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    min-width: 220px;
+  }
+  .toast.success { border-left: 3px solid var(--success); }
+  .toast.error { border-left: 3px solid var(--danger); }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ── CONFIRM DIALOG ── */
+  .confirm-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1500;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+  }
+  .confirm-dialog {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    width: min(360px, 100%);
+    text-align: center;
+  }
+  .confirm-dialog h4 { margin-bottom: 0.5rem; font-size: 1rem; }
+  .confirm-dialog p { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.2rem; }
+  .confirm-actions { display: flex; gap: 0.6rem; justify-content: center; }
+
+  /* ── LOADING ── */
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-row td { text-align: center; padding: 2rem; color: var(--text-muted); }
+
+  /* ── SETUP ── */
+  .setup-card {
+    max-width: 500px;
+    margin: 4rem auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+  }
+  .setup-card h2 { margin-bottom: 1rem; }
+  .setup-card p { color: var(--text-muted); line-height: 1.7; font-size: 0.9rem; }
+  .setup-card code {
+    background: var(--surface2);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-family: monospace;
+    color: #a5b4fc;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 700px) {
+    .app-layout { grid-template-columns: 1fr; }
+    .sidebar { position: fixed; left: -220px; z-index: 500; transition: left 0.25s; height: 100vh; }
+    .sidebar.open { left: 0; }
+    .main-content { padding: 1rem; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.2rem">後台管理</div>
+      <span>陳艾倫大事紀</span>
+    </div>
+    <nav>
+      <button class="nav-item active" onclick="showPage('events')" data-page="events">
+        <span class="nav-icon">📋</span> 大事紀管理
+      </button>
+      <button class="nav-item" onclick="showPage('categories')" data-page="categories">
+        <span class="nav-icon">🏷️</span> 分類管理
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <a href="index.html">← 回到前台</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- EVENTS PAGE -->
+    <div class="page active" id="page-events">
+      <div class="page-header">
+        <div class="page-title">大事紀管理 <small id="eventsCount"></small></div>
+        <button class="btn btn-primary" onclick="openEventModal()">+ 新增紀事</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:70px">年份</th>
+              <th style="width:50px">月份</th>
+              <th>標題</th>
+              <th>摘要</th>
+              <th>分類</th>
+              <th style="width:140px">操作</th>
+            </tr>
+          </thead>
+          <tbody id="eventsTable">
+            <tr class="loading-row"><td colspan="6"><div class="spinner"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CATEGORIES PAGE -->
+    <div class="page" id="page-categories">
+      <div class="page-header">
+        <div class="page-title">分類管理</div>
+        <button class="btn btn-primary" onclick="openCatModal()">+ 新增分類</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:50px">顏色</th>
+              <th style="width:60px">圖示</th>
+              <th>名稱</th>
+              <th style="width:140px">操作</th>
+            </tr>
+          </thead>
+          <tbody id="catsTable">
+            <tr class="loading-row"><td colspan="4"><div class="spinner"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── EVENT MODAL ── -->
+<div class="modal-overlay" id="eventModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="eventModalTitle">新增紀事</h3>
+      <button class="modal-close" onclick="closeModal('eventModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="eventId">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">年份</label>
+          <input type="number" id="eventYear" class="form-input" placeholder="例：1990" min="1975" max="2026">
+        </div>
+        <div class="form-group">
+          <label class="form-label">月份</label>
+          <select id="eventMonth" class="form-select">
+            <option value="">不指定</option>
+            <option>1</option><option>2</option><option>3</option>
+            <option>4</option><option>5</option><option>6</option>
+            <option>7</option><option>8</option><option>9</option>
+            <option>10</option><option>11</option><option>12</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label required">標題</label>
+        <input type="text" id="eventTitle" class="form-input" placeholder="大事紀標題">
+      </div>
+      <div class="form-group">
+        <label class="form-label required">摘要（顯示在時間軸）</label>
+        <input type="text" id="eventSummary" class="form-input" placeholder="一句話描述">
+      </div>
+      <div class="form-group">
+        <label class="form-label">詳細說明（滑鼠移入時顯示）</label>
+        <textarea id="eventDetail" class="form-textarea" placeholder="可輸入多行詳細內容..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">圖片網址</label>
+        <input type="url" id="eventImage" class="form-input" placeholder="https://...（選填）">
+      </div>
+      <div class="form-group">
+        <label class="form-label">分類標籤</label>
+        <div class="cat-grid" id="eventCatGrid">
+          <div style="color:var(--text-muted);font-size:0.85rem">載入中...</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('eventModal')">取消</button>
+      <button class="btn btn-primary" id="eventSaveBtn" onclick="saveEvent()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CATEGORY MODAL ── -->
+<div class="modal-overlay" id="catModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="catModalTitle">新增分類</h3>
+      <button class="modal-close" onclick="closeModal('catModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="catId">
+      <div class="form-group">
+        <label class="form-label required">分類名稱</label>
+        <input type="text" id="catName" class="form-input" placeholder="例：職涯、學習、運動...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">圖示（Emoji）</label>
+        <input type="text" id="catIcon" class="form-input" placeholder="例：💼 📚 🏃">
+        <div class="form-hint">可直接貼上 Emoji 表情符號</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">顏色</label>
+        <div class="color-picker-wrap">
+          <input type="color" id="catColor" class="form-color" value="#6366f1">
+          <div class="color-presets" id="colorPresets"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('catModal')">取消</button>
+      <button class="btn btn-primary" id="catSaveBtn" onclick="saveCategory()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const { createClient } = supabase;
+let client = null;
+let allCategories = [];
+let allEvents = [];
+
+const COLOR_PRESETS = [
+  '#2563EB','#7C3AED','#DC2626','#D97706','#DB2777',
+  '#16A34A','#0891B2','#EA580C','#65A30D','#6B7280'
+];
+
+// ── INIT ──────────────────────────────────────────
+async function init() {
+  try {
+    const cfg = await getSupabaseConfig();
+    client = createClient(cfg.url, cfg.anonKey);
+    initColorPresets();
+    await Promise.all([loadCategories(), loadEvents()]);
+  } catch (err) {
+    document.querySelector('.main-content').innerHTML = `
+      <div class="setup-card">
+        <div style="font-size:2.5rem;margin-bottom:1rem">🔒</div>
+        <h2>存取遭拒</h2>
+        <p style="color:#f87171">${err.message}</p>
+      </div>`;
+  }
+}
+
+// ── DATA ──────────────────────────────────────────
+async function loadCategories() {
+  const { data, error } = await client.from('categories').select('*').order('name');
+  if (error) return showToast(error.message, 'error');
+  allCategories = data || [];
+  renderCatsTable();
+  renderEventCatGrid();
+}
+
+async function loadEvents() {
+  const { data, error } = await client
+    .from('events')
+    .select('*, event_categories(category_id, categories(*))')
+    .order('year', { ascending: false })
+    .order('month', { ascending: false, nullsFirst: false });
+  if (error) return showToast(error.message, 'error');
+  allEvents = data || [];
+  renderEventsTable();
+}
+
+// ── RENDER ────────────────────────────────────────
+function renderEventsTable() {
+  const tbody = document.getElementById('eventsTable');
+  document.getElementById('eventsCount').textContent = `(${allEvents.length} 筆)`;
+
+  if (allEvents.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem">尚無資料</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = allEvents.map(ev => {
+    const cats = (ev.event_categories || []).map(ec => ec.categories).filter(Boolean);
+    const tagsHTML = cats.map(c =>
+      `<span class="tag" style="background:${c.color}">${c.icon || ''} ${c.name}</span>`
+    ).join(' ');
+    return `
+      <tr>
+        <td>${ev.year}</td>
+        <td>${ev.month || '—'}</td>
+        <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escHtml(ev.title)}">${escHtml(ev.title)}</td>
+        <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)" title="${escHtml(ev.summary)}">${escHtml(ev.summary)}</td>
+        <td style="max-width:180px">${tagsHTML || '<span style="color:var(--text-muted)">—</span>'}</td>
+        <td>
+          <div class="td-actions">
+            <button class="btn btn-ghost btn-sm" onclick="openEventModal('${ev.id}')">✏️ 編輯</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmDeleteEvent('${ev.id}')">🗑️</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function renderCatsTable() {
+  const tbody = document.getElementById('catsTable');
+  if (allCategories.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:2rem">尚無分類</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = allCategories.map(c => `
+    <tr>
+      <td><span class="tag-dot" style="background:${c.color}"></span></td>
+      <td style="font-size:1.2rem">${c.icon || '—'}</td>
+      <td>${escHtml(c.name)}</td>
+      <td>
+        <div class="td-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openCatModal('${c.id}')">✏️ 編輯</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDeleteCat('${c.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function renderEventCatGrid() {
+  const grid = document.getElementById('eventCatGrid');
+  const selected = Array.from(grid.querySelectorAll('.cat-checkbox.selected')).map(el => el.dataset.id);
+
+  grid.innerHTML = allCategories.map(c => `
+    <label class="cat-checkbox ${selected.includes(c.id) ? 'selected' : ''}" data-id="${c.id}">
+      <input type="checkbox" value="${c.id}" ${selected.includes(c.id) ? 'checked' : ''}>
+      <span class="tag-dot" style="background:${c.color}"></span>
+      ${c.icon || ''} ${escHtml(c.name)}
+    </label>`).join('');
+
+  grid.querySelectorAll('.cat-checkbox').forEach(label => {
+    label.addEventListener('click', () => {
+      label.classList.toggle('selected');
+      label.querySelector('input').checked = label.classList.contains('selected');
+    });
+  });
+}
+
+// ── EVENT MODAL ───────────────────────────────────
+function openEventModal(id) {
+  document.getElementById('eventModalTitle').textContent = id ? '編輯紀事' : '新增紀事';
+  document.getElementById('eventId').value = '';
+  document.getElementById('eventYear').value = '';
+  document.getElementById('eventMonth').value = '';
+  document.getElementById('eventTitle').value = '';
+  document.getElementById('eventSummary').value = '';
+  document.getElementById('eventDetail').value = '';
+  document.getElementById('eventImage').value = '';
+
+  // Reset cat grid
+  renderEventCatGrid();
+
+  if (id) {
+    const ev = allEvents.find(e => e.id === id);
+    if (!ev) return;
+    document.getElementById('eventId').value = ev.id;
+    document.getElementById('eventYear').value = ev.year;
+    document.getElementById('eventMonth').value = ev.month || '';
+    document.getElementById('eventTitle').value = ev.title;
+    document.getElementById('eventSummary').value = ev.summary;
+    document.getElementById('eventDetail').value = ev.detail || '';
+    document.getElementById('eventImage').value = ev.image_url || '';
+
+    const selectedCatIds = (ev.event_categories || []).map(ec => ec.category_id);
+    document.querySelectorAll('#eventCatGrid .cat-checkbox').forEach(label => {
+      if (selectedCatIds.includes(label.dataset.id)) {
+        label.classList.add('selected');
+        label.querySelector('input').checked = true;
+      }
+    });
+  }
+
+  openModal('eventModal');
+}
+
+async function saveEvent() {
+  const btn = document.getElementById('eventSaveBtn');
+  const id = document.getElementById('eventId').value;
+  const year = parseInt(document.getElementById('eventYear').value);
+  const month = document.getElementById('eventMonth').value ? parseInt(document.getElementById('eventMonth').value) : null;
+  const title = document.getElementById('eventTitle').value.trim();
+  const summary = document.getElementById('eventSummary').value.trim();
+  const detail = document.getElementById('eventDetail').value.trim();
+  const image_url = document.getElementById('eventImage').value.trim();
+
+  if (!year || !title || !summary) {
+    showToast('請填寫必要欄位（年份、標題、摘要）', 'error');
+    return;
+  }
+
+  const selectedCatIds = Array.from(
+    document.querySelectorAll('#eventCatGrid .cat-checkbox.selected')
+  ).map(el => el.dataset.id);
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 儲存中...';
+
+  try {
+    let eventId = id;
+
+    if (id) {
+      const { error } = await client.from('events').update({
+        year, month, title, summary,
+        detail: detail || null,
+        image_url: image_url || null
+      }).eq('id', id);
+      if (error) throw error;
+    } else {
+      const { data, error } = await client.from('events').insert([{
+        year, month, title, summary,
+        detail: detail || null,
+        image_url: image_url || null
+      }]).select();
+      if (error) throw error;
+      eventId = data[0].id;
+    }
+
+    // Update categories
+    await client.from('event_categories').delete().eq('event_id', eventId);
+    if (selectedCatIds.length > 0) {
+      const rows = selectedCatIds.map(cid => ({ event_id: eventId, category_id: cid }));
+      const { error } = await client.from('event_categories').insert(rows);
+      if (error) throw error;
+    }
+
+    showToast(id ? '紀事已更新' : '紀事已新增', 'success');
+    closeModal('eventModal');
+    await loadEvents();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '儲存';
+  }
+}
+
+function confirmDeleteEvent(id) {
+  const ev = allEvents.find(e => e.id === id);
+  showConfirm(
+    '刪除紀事',
+    `確定要刪除「${ev?.title}」嗎？此操作無法復原。`,
+    async () => {
+      const { error } = await client.from('events').delete().eq('id', id);
+      if (error) return showToast(error.message, 'error');
+      showToast('已刪除', 'success');
+      await loadEvents();
+    }
+  );
+}
+
+// ── CATEGORY MODAL ────────────────────────────────
+function openCatModal(id) {
+  document.getElementById('catModalTitle').textContent = id ? '編輯分類' : '新增分類';
+  document.getElementById('catId').value = '';
+  document.getElementById('catName').value = '';
+  document.getElementById('catIcon').value = '';
+  document.getElementById('catColor').value = '#6366f1';
+  document.querySelectorAll('.color-preset').forEach(el => el.classList.remove('active'));
+
+  if (id) {
+    const cat = allCategories.find(c => c.id === id);
+    if (!cat) return;
+    document.getElementById('catId').value = cat.id;
+    document.getElementById('catName').value = cat.name;
+    document.getElementById('catIcon').value = cat.icon || '';
+    document.getElementById('catColor').value = cat.color;
+    document.querySelectorAll('.color-preset').forEach(el => {
+      if (el.dataset.color === cat.color) el.classList.add('active');
+    });
+  }
+
+  openModal('catModal');
+}
+
+async function saveCategory() {
+  const btn = document.getElementById('catSaveBtn');
+  const id = document.getElementById('catId').value;
+  const name = document.getElementById('catName').value.trim();
+  const icon = document.getElementById('catIcon').value.trim();
+  const color = document.getElementById('catColor').value;
+
+  if (!name) { showToast('請填寫分類名稱', 'error'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 儲存中...';
+
+  try {
+    if (id) {
+      const { error } = await client.from('categories').update({ name, icon, color }).eq('id', id);
+      if (error) throw error;
+    } else {
+      const { error } = await client.from('categories').insert([{ name, icon, color }]);
+      if (error) throw error;
+    }
+    showToast(id ? '分類已更新' : '分類已新增', 'success');
+    closeModal('catModal');
+    await loadCategories();
+    await loadEvents(); // Refresh since categories changed
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '儲存';
+  }
+}
+
+function confirmDeleteCat(id) {
+  const cat = allCategories.find(c => c.id === id);
+  showConfirm(
+    '刪除分類',
+    `確定要刪除分類「${cat?.name}」嗎？已使用此分類的紀事將移除此標籤。`,
+    async () => {
+      const { error } = await client.from('categories').delete().eq('id', id);
+      if (error) return showToast(error.message, 'error');
+      showToast('已刪除', 'success');
+      await loadCategories();
+      await loadEvents();
+    }
+  );
+}
+
+// ── COLOR PRESETS ─────────────────────────────────
+function initColorPresets() {
+  const container = document.getElementById('colorPresets');
+  COLOR_PRESETS.forEach(color => {
+    const el = document.createElement('div');
+    el.className = 'color-preset';
+    el.style.background = color;
+    el.dataset.color = color;
+    el.onclick = () => {
+      document.getElementById('catColor').value = color;
+      document.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+    };
+    container.appendChild(el);
+  });
+}
+
+// ── UI HELPERS ────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.querySelector(`[data-page="${name}"]`).classList.add('active');
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal(overlay.id);
+  });
+});
+
+function showToast(msg, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${escHtml(msg)}`;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function showConfirm(title, msg, onConfirm) {
+  const el = document.createElement('div');
+  el.className = 'confirm-overlay';
+  el.innerHTML = `
+    <div class="confirm-dialog">
+      <h4>${escHtml(title)}</h4>
+      <p>${escHtml(msg)}</p>
+      <div class="confirm-actions">
+        <button class="btn btn-ghost" id="confirmCancel">取消</button>
+        <button class="btn btn-danger" id="confirmOk">確定刪除</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.querySelector('#confirmCancel').onclick = () => el.remove();
+  el.querySelector('#confirmOk').onclick = async () => {
+    el.remove();
+    await onConfirm();
+  };
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+init();
+</script>
+</body>
+</html>

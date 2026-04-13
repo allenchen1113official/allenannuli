@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>陳艾倫 · 人生大事紀 1975–2026</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1e1e2e;
+    --border: #2a2a3e;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --line: #2a2a3e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 3rem 2rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 50% 50%, rgba(99,102,241,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .header-name {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, #e2e8f0 0%, #a5b4fc 50%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+  .header-sub {
+    color: var(--text-muted);
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+  }
+  .header-admin {
+    position: absolute;
+    top: 1.5rem;
+    right: 2rem;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.3);
+    color: #a5b4fc;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .header-admin:hover {
+    background: rgba(99,102,241,0.3);
+    color: #c7d2fe;
+  }
+
+  /* ── FILTER TAGS ── */
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    padding: 1.5rem 2rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .filter-btn {
+    border: none;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+    opacity: 0.6;
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .filter-btn.active {
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .filter-btn:hover { opacity: 0.9; }
+  .filter-btn.all { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border-color: transparent; }
+
+  /* ── MAIN LAYOUT ── */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 6rem;
+  }
+
+  /* ── TIMELINE ── */
+  .timeline {
+    position: relative;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 80px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, var(--line) 5%, var(--line) 95%, transparent);
+  }
+
+  .year-group { margin-bottom: 0.5rem; }
+
+  .year-label {
+    position: sticky;
+    top: 72px;
+    z-index: 50;
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.3rem 0;
+  }
+  .year-label span {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--bg);
+    padding-right: 0.5rem;
+    width: 72px;
+    text-align: right;
+    display: block;
+  }
+
+  /* ── EVENT CARD ── */
+  .event-item {
+    display: grid;
+    grid-template-columns: 80px auto;
+    margin-bottom: 0.4rem;
+    position: relative;
+  }
+  .event-dot {
+    display: flex;
+    justify-content: center;
+    padding-top: 1.1rem;
+    position: relative;
+    z-index: 2;
+  }
+  .event-dot::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+    transition: all 0.2s;
+  }
+  .event-item:hover .event-dot::after {
+    background: #a5b4fc;
+    box-shadow: 0 0 0 5px rgba(99,102,241,0.3);
+    transform: scale(1.3);
+  }
+
+  .event-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+    overflow: hidden;
+  }
+  .event-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(99,102,241,0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .event-item:hover .event-card {
+    border-color: rgba(99,102,241,0.4);
+    transform: translateX(4px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .event-item:hover .event-card::before { opacity: 1; }
+
+  .event-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .event-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .event-month {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+  .event-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-bottom: 0.4rem;
+  }
+  .tag {
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: white;
+    letter-spacing: 0.02em;
+  }
+  .event-summary {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* ── DETAIL POPUP ── */
+  .detail-popup {
+    position: fixed;
+    z-index: 200;
+    background: var(--surface2);
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 16px;
+    padding: 1.4rem;
+    width: min(380px, 90vw);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
+    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+    backdrop-filter: blur(16px);
+  }
+  .detail-popup.visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  .popup-year-title {
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+  }
+  .popup-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    color: var(--text);
+  }
+  .popup-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.8rem; }
+  .popup-detail {
+    font-size: 0.87rem;
+    color: #cbd5e1;
+    line-height: 1.7;
+    white-space: pre-line;
+  }
+  .popup-image {
+    width: 100%;
+    border-radius: 8px;
+    margin-top: 0.8rem;
+    object-fit: cover;
+    max-height: 180px;
+  }
+
+  /* ── LOADING & EMPTY ── */
+  .loading {
+    text-align: center;
+    padding: 4rem;
+    color: var(--text-muted);
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+  }
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+  /* ── SETUP BANNER ── */
+  .setup-banner {
+    background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  .setup-banner h3 { color: #a5b4fc; margin-bottom: 0.5rem; }
+  .setup-banner p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; }
+  .setup-banner code {
+    background: rgba(0,0,0,0.3);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-family: monospace;
+    color: #c7d2fe;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .timeline::before { left: 60px; }
+    .event-item { grid-template-columns: 60px auto; }
+    .year-label span { width: 52px; font-size: 1.1rem; }
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="admin.html" class="header-admin">後台管理 →</a>
+  <div class="header-name">陳艾倫</div>
+  <div class="header-sub">Allen Chen &nbsp;·&nbsp; 人生大事紀 1975 – 2026</div>
+</header>
+
+<div class="filter-bar" id="filterBar">
+  <button class="filter-btn all active" data-id="all">全部</button>
+</div>
+
+<main>
+  <div id="timelineContainer">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>載入中...</div>
+    </div>
+  </div>
+</main>
+
+<div class="detail-popup" id="detailPopup"></div>
+
+<script>
+const { createClient } = supabase;
+let client = null;
+let allEvents = [];
+let allCategories = [];
+let activeFilter = 'all';
+let popupTimer = null;
+
+async function initSupabase() {
+  const cfg = await getSupabaseConfig();
+  client = createClient(cfg.url, cfg.anonKey);
+}
+
+async function loadCategories() {
+  if (!client) return [];
+  const { data } = await client.from('categories').select('*').order('name');
+  return data || [];
+}
+
+async function loadEvents() {
+  if (!client) return [];
+  const { data } = await client
+    .from('events')
+    .select(`*, event_categories(category_id, categories(*))`)
+    .order('year', { ascending: false })
+    .order('month', { ascending: false, nullsFirst: false })
+    .order('sort_order', { ascending: false });
+  return data || [];
+}
+
+function renderFilterBar(categories) {
+  const bar = document.getElementById('filterBar');
+  categories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn';
+    btn.dataset.id = cat.id;
+    btn.innerHTML = `${cat.icon || ''} ${cat.name}`;
+    btn.style.setProperty('--cat-color', cat.color);
+    btn.addEventListener('click', () => setFilter(cat.id, btn));
+    bar.appendChild(btn);
+  });
+}
+
+function setFilter(id, btn) {
+  activeFilter = id;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTimeline();
+}
+
+function getEventCategories(event) {
+  return (event.event_categories || []).map(ec => ec.categories).filter(Boolean);
+}
+
+function filterEvents(events) {
+  if (activeFilter === 'all') return events;
+  return events.filter(ev =>
+    getEventCategories(ev).some(cat => cat.id === activeFilter)
+  );
+}
+
+function renderTimeline() {
+  const container = document.getElementById('timelineContainer');
+  const filtered = filterEvents(allEvents);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div>目前沒有紀事</div>
+        <div style="font-size:0.85rem;margin-top:0.5rem;">
+          請至<a href="admin.html" style="color:#a5b4fc;">後台管理</a>新增大事紀
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Group by year
+  const byYear = {};
+  filtered.forEach(ev => {
+    if (!byYear[ev.year]) byYear[ev.year] = [];
+    byYear[ev.year].push(ev);
+  });
+
+  const years = Object.keys(byYear).sort((a, b) => b - a);
+
+  container.innerHTML = years.map(year => `
+    <div class="year-group">
+      <div class="year-label"><span>${year}</span></div>
+      ${byYear[year].map(ev => renderEventCard(ev)).join('')}
+    </div>
+  `).join('');
+
+  // Attach hover listeners
+  container.querySelectorAll('.event-item').forEach(item => {
+    const card = item.querySelector('.event-card');
+    const eventId = item.dataset.eventId;
+    const event = allEvents.find(e => e.id === eventId);
+    if (!event) return;
+
+    card.addEventListener('mouseenter', (e) => showPopup(e, event));
+    card.addEventListener('mousemove', (e) => movePopup(e));
+    card.addEventListener('mouseleave', hidePopup);
+  });
+}
+
+function renderEventCard(ev) {
+  const cats = getEventCategories(ev);
+  const tagsHTML = cats.map(c =>
+    `<span class="tag" style="background:${c.color}">${c.icon || ''} ${c.name}</span>`
+  ).join('');
+  const monthStr = ev.month ? `${ev.month}月` : '';
+
+  return `
+    <div class="event-item" data-event-id="${ev.id}">
+      <div class="event-dot"></div>
+      <div class="event-card">
+        <div class="event-header">
+          <div class="event-title">${escHtml(ev.title)}</div>
+          ${monthStr ? `<div class="event-month">${monthStr}</div>` : ''}
+        </div>
+        ${tagsHTML ? `<div class="event-tags">${tagsHTML}</div>` : ''}
+        <div class="event-summary">${escHtml(ev.summary)}</div>
+      </div>
+    </div>`;
+}
+
+function showPopup(e, event) {
+  const cats = getEventCategories(event);
+  const popup = document.getElementById('detailPopup');
+
+  const tagsHTML = cats.map(c =>
+    `<span class="tag" style="background:${c.color}">${c.icon || ''} ${c.name}</span>`
+  ).join('');
+
+  const monthStr = event.month ? `${event.year}年${event.month}月` : `${event.year}年`;
+  const imgHTML = event.image_url
+    ? `<img src="${escHtml(event.image_url)}" class="popup-image" alt="" loading="lazy">`
+    : '';
+
+  popup.innerHTML = `
+    <div class="popup-year-title">${monthStr}</div>
+    <div class="popup-title">${escHtml(event.title)}</div>
+    ${tagsHTML ? `<div class="popup-tags">${tagsHTML}</div>` : ''}
+    <div class="popup-detail">${escHtml(event.detail || event.summary)}</div>
+    ${imgHTML}
+  `;
+
+  movePopup(e);
+  popup.classList.add('visible');
+}
+
+function movePopup(e) {
+  const popup = document.getElementById('detailPopup');
+  const pw = popup.offsetWidth;
+  const ph = popup.offsetHeight;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  let x = e.clientX + 16;
+  let y = e.clientY + 16;
+  if (x + pw > vw - 12) x = e.clientX - pw - 16;
+  if (y + ph > vh - 12) y = e.clientY - ph - 16;
+  popup.style.left = Math.max(8, x) + 'px';
+  popup.style.top = Math.max(8, y) + 'px';
+}
+
+function hidePopup() {
+  document.getElementById('detailPopup').classList.remove('visible');
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showSetupBanner() {
+  document.getElementById('timelineContainer').innerHTML = `
+    <div class="setup-banner">
+      <h3>⚙️ 尚未設定 Supabase</h3>
+      <p>
+        請開啟 <code>config.js</code> 並填入您的 Supabase URL 及 API Key。<br>
+        接著在 Supabase SQL Editor 執行 <code>schema.sql</code> 建立資料表。<br><br>
+        設定完成後，請至<a href="admin.html" style="color:#a5b4fc;"> 後台管理 </a>新增大事紀資料。
+      </p>
+    </div>`;
+}
+
+async function init() {
+  try {
+    await initSupabase();
+    [allCategories, allEvents] = await Promise.all([loadCategories(), loadEvents()]);
+    renderFilterBar(allCategories);
+    renderTimeline();
+
+    document.querySelector('.filter-btn.all').addEventListener('click', function() {
+      activeFilter = 'all';
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      renderTimeline();
+    });
+  } catch (err) {
+    console.error(err);
+    document.getElementById('timelineContainer').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <div>載入失敗：${err.message}</div>
+      </div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
