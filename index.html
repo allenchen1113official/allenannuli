@@ -356,6 +356,57 @@
   }
 
   /* ── SCROLLBAR ── */
+  /* ── STATS BAR ── */
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.8rem 2.2rem;
+    position: relative;
+  }
+  .stat-item + .stat-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: rgba(255,255,255,0.1);
+  }
+  .stat-number {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, #e2e8f0 0%, #a5b4fc 60%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+  }
+  .stat-unit {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #a5b4fc;
+    margin-left: 2px;
+  }
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  @media (max-width: 480px) {
+    .stat-item { padding: 0.7rem 1.2rem; }
+  }
+
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -368,6 +419,20 @@
   <a href="admin.html" class="header-admin">後台管理 →</a>
   <div class="header-name">陳艾倫</div>
   <div class="header-sub">Allen Chen &nbsp;·&nbsp; 人生大事紀 1975 – 2026</div>
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div><span class="stat-number">51</span><span class="stat-unit">歲</span></div>
+      <div class="stat-label">年齡</div>
+    </div>
+    <div class="stat-item">
+      <div><span class="stat-number">94</span><span class="stat-unit">次</span></div>
+      <div class="stat-label">捐血</div>
+    </div>
+    <div class="stat-item">
+      <div><span class="stat-number">3</span><span class="stat-unit">場</span></div>
+      <div class="stat-label">全程馬拉松</div>
+    </div>
+  </div>
 </header>
 
 <div class="filter-bar" id="filterBar">
