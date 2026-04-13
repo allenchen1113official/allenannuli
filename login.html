@@ -313,10 +313,14 @@ async function handleRegister(e) {
   const pass2 = document.getElementById('regPassword2').value;
   if (pass1 !== pass2) { showMsg('兩次密碼不一致', 'error'); return; }
   setLoading('registerBtn', true);
-  const { error } = await client.auth.signUp({ email, password: pass1 });
+  const { data, error } = await client.auth.signUp({ email, password: pass1 });
   setLoading('registerBtn', false);
   if (error) {
     showMsg(error.message, 'error');
+  } else if (data.session) {
+    // Email confirmation disabled — session returned immediately
+    const redir = new URLSearchParams(location.search).get('next') || 'index.html';
+    location.href = redir;
   } else {
     showMsg('帳號已建立！請至信箱確認驗證郵件後再登入。', 'success');
     switchTab('login');

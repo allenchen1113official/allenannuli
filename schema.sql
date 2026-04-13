@@ -77,28 +77,34 @@ DROP POLICY IF EXISTS "Allow public read event_categories" ON event_categories;
 DROP POLICY IF EXISTS "Allow all write categories" ON categories;
 DROP POLICY IF EXISTS "Allow all write events" ON events;
 DROP POLICY IF EXISTS "Allow all write event_categories" ON event_categories;
+DROP POLICY IF EXISTS "Users manage own categories" ON categories;
+DROP POLICY IF EXISTS "Users manage own events" ON events;
+DROP POLICY IF EXISTS "Users manage own event_categories" ON event_categories;
+DROP POLICY IF EXISTS "Users manage own stats" ON stats;
 
--- categories：已登入者只能存取自己的分類
-CREATE POLICY "Users manage own categories" ON categories
-  FOR ALL USING (auth.uid() = user_id);
+-- ── 公開讀取（首頁不需登入即可瀏覽） ──
+CREATE POLICY "Public read events"           ON events           FOR SELECT USING (true);
+CREATE POLICY "Public read categories"       ON categories       FOR SELECT USING (true);
+CREATE POLICY "Public read event_categories" ON event_categories FOR SELECT USING (true);
+CREATE POLICY "Public read stats"            ON stats            FOR SELECT USING (true);
 
--- events：已登入者只能存取自己的大事紀
-CREATE POLICY "Users manage own events" ON events
-  FOR ALL USING (auth.uid() = user_id);
+-- ── 需登入才能寫入（只能操作自己的資料） ──
+CREATE POLICY "Users insert own events"    ON events    FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users update own events"    ON events    FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users delete own events"    ON events    FOR DELETE USING (auth.uid() = user_id);
 
--- event_categories：透過 event 的 user_id 控制
-CREATE POLICY "Users manage own event_categories" ON event_categories
+CREATE POLICY "Users insert own categories" ON categories FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users update own categories" ON categories FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users delete own categories" ON categories FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users write own event_categories" ON event_categories
   FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM events
-      WHERE events.id = event_categories.event_id
-        AND events.user_id = auth.uid()
-    )
+    EXISTS (SELECT 1 FROM events WHERE events.id = event_categories.event_id AND events.user_id = auth.uid())
   );
 
--- stats：已登入者只能存取自己的統計
-CREATE POLICY "Users manage own stats" ON stats
-  FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users insert own stats" ON stats FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users update own stats" ON stats FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users delete own stats" ON stats FOR DELETE USING (auth.uid() = user_id);
 
 -- =============================================
 -- 若需要將舊資料（無 user_id）遷移，請手動執行：

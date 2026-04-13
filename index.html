@@ -503,16 +503,20 @@ async function initSupabase() {
 }
 
 async function loadData(userId) {
-  const evQ = client.from('events')
+  let evQ = client.from('events')
     .select(`*, event_categories(category_id, categories(*))`)
-    .eq('user_id', userId)
     .order('year', { ascending: false })
     .order('month', { ascending: false, nullsFirst: false })
     .order('sort_order', { ascending: false });
 
-  const catQ = client.from('categories').select('*').eq('user_id', userId).order('name');
-  const statQ = client.from('stats').select('*').eq('user_id', userId)
-    .eq('visible', true).order('sort_order');
+  let catQ = client.from('categories').select('*').order('name');
+  let statQ = client.from('stats').select('*').eq('visible', true).order('sort_order');
+
+  if (userId) {
+    evQ  = evQ.eq('user_id', userId);
+    catQ = catQ.eq('user_id', userId);
+    statQ = statQ.eq('user_id', userId);
+  }
 
   const [ev, cat, st] = await Promise.all([evQ, catQ, statQ]);
   allEvents = ev.data || [];
@@ -723,19 +727,9 @@ async function init() {
     const { data: { session } } = await client.auth.getSession();
     currentUser = session?.user || null;
 
-    if (!currentUser) {
-      document.getElementById('adminLink').href = 'login.html?next=admin.html';
-      document.getElementById('headerName').textContent = '陳艾倫';
-      document.getElementById('timelineContainer').innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">🔒</div>
-          <div style="margin-bottom:0.8rem">請登入以查看大事紀</div>
-          <a href="login.html" style="background:linear-gradient(135deg,#1d7fe5,#0ea5e9);color:#fff;padding:0.6rem 1.5rem;border-radius:999px;text-decoration:none;font-weight:600">登入</a>
-        </div>`;
-      return;
-    }
+    document.getElementById('adminLink').href = currentUser ? 'admin.html' : 'login.html?next=admin.html';
 
-    await loadData(currentUser.id);
+    await loadData(currentUser?.id || null);
     renderStats();
     renderFilterBar();
     renderTimeline();
