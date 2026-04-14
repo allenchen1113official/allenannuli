@@ -503,56 +503,91 @@
 
 <!-- IMPORT MODAL -->
 <div class="modal-overlay" id="importModal">
-  <div class="modal" style="width:min(680px,100%)">
+  <div class="modal" style="width:min(720px,100%)">
     <div class="modal-header">
-      <h3>📥 批次匯入大事紀</h3>
+      <h3>📥 批次匯入（分類 + 大事紀）</h3>
       <button class="modal-close" onclick="closeModal('importModal')">×</button>
     </div>
     <div class="modal-body">
+
+      <!-- Step 1: Upload -->
       <div id="importStep1">
         <div style="background:rgba(29,127,229,0.08);border:1px solid rgba(29,127,229,0.2);border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.85rem;color:var(--text-muted);line-height:1.8">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.6rem;margin-bottom:0.5rem">
-            <span>請使用官方範本填入資料後上傳：</span>
-            <a href="大事紀匯入範本.xlsx" download style="display:inline-flex;align-items:center;gap:0.35rem;background:linear-gradient(135deg,#1d7fe5,#0ea5e9);color:white;padding:0.35rem 0.9rem;border-radius:8px;text-decoration:none;font-weight:600;font-size:0.82rem;transition:opacity 0.15s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">⬇ 下載範本</a>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.6rem;margin-bottom:0.6rem">
+            <span style="font-weight:600;color:var(--text)">請使用官方範本，依序填入分類與大事紀後上傳：</span>
+            <a href="大事紀匯入範本.xlsx" download style="display:inline-flex;align-items:center;gap:0.35rem;background:linear-gradient(135deg,#1d7fe5,#0ea5e9);color:white;padding:0.35rem 0.9rem;border-radius:8px;text-decoration:none;font-weight:600;font-size:0.82rem" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">⬇ 下載範本</a>
           </div>
-          欄位順序：年份* | 月份 | 日 | 標題* | 摘要* | 詳細說明 | 分類（逗號分隔） | 圖片網址<br>
-          第 1 列為標題列，第 2 列為提示列，資料從<strong style="color:#7dd3fc">第 3 列</strong>開始讀取。
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+            <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:0.6rem 0.8rem">
+              <div style="color:#7dd3fc;font-weight:600;margin-bottom:0.2rem">工作表 1：分類資料</div>
+              名稱* | 圖示 | 顏色(HEX)
+            </div>
+            <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:0.6rem 0.8rem">
+              <div style="color:#7dd3fc;font-weight:600;margin-bottom:0.2rem">工作表 2：大事紀資料</div>
+              年份* | 月 | 日 | 標題* | 摘要* | 說明 | 分類 | 圖片
+            </div>
+          </div>
+          <div style="margin-top:0.5rem;font-size:0.78rem">資料從第 3 列開始讀取（第 1 列標題、第 2 列提示）。匯入時先建立分類，再建立大事紀。</div>
         </div>
-        <div id="importDropZone" style="border:2px dashed var(--border);border-radius:12px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all 0.2s"
+        <div id="importDropZone" style="border:2px dashed var(--border);border-radius:12px;padding:2.5rem 2rem;text-align:center;cursor:pointer;transition:all 0.2s"
           onclick="document.getElementById('importFileInput').click()"
           ondragover="event.preventDefault();this.style.borderColor='#1d7fe5'"
           ondragleave="this.style.borderColor=''"
           ondrop="handleImportDrop(event)">
-          <div style="font-size:2.5rem;margin-bottom:0.5rem">📂</div>
+          <div style="font-size:2.2rem;margin-bottom:0.5rem">📂</div>
           <div style="font-weight:600;margin-bottom:0.3rem">點擊選擇或拖曳 Excel 檔案</div>
           <div style="font-size:0.82rem;color:var(--text-muted)">.xlsx / .xls 格式</div>
         </div>
         <input type="file" id="importFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleImportFile(this.files[0])">
       </div>
+
+      <!-- Step 2: Preview -->
       <div id="importStep2" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
           <div id="importSummary" style="font-size:0.88rem;color:var(--text-muted)"></div>
           <button class="btn btn-ghost btn-sm" onclick="resetImport()">← 重新選擇</button>
         </div>
-        <div style="max-height:340px;overflow-y:auto;border-radius:10px;border:1px solid var(--border)">
-          <table style="width:100%;border-collapse:collapse;font-size:0.82rem;min-width:auto">
-            <thead>
-              <tr style="background:var(--surface2);position:sticky;top:0">
-                <th style="padding:0.5rem 0.7rem;text-align:left;width:30px">#</th>
-                <th style="padding:0.5rem 0.7rem;text-align:left;width:55px">日期</th>
-                <th style="padding:0.5rem 0.7rem;text-align:left">標題</th>
-                <th style="padding:0.5rem 0.7rem;text-align:left">摘要</th>
-                <th style="padding:0.5rem 0.7rem;text-align:left">分類</th>
-                <th style="padding:0.5rem 0.7rem;text-align:center;width:50px">狀態</th>
-              </tr>
-            </thead>
-            <tbody id="importPreviewBody"></tbody>
-          </table>
+
+        <!-- Categories preview -->
+        <div id="importCatSection" style="display:none;margin-bottom:1.2rem">
+          <div style="font-size:0.82rem;font-weight:700;color:#7dd3fc;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem">🏷️ 分類 <span id="importCatCount"></span></div>
+          <div style="max-height:180px;overflow-y:auto;border-radius:8px;border:1px solid var(--border)">
+            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;min-width:auto">
+              <thead><tr style="background:var(--surface2);position:sticky;top:0">
+                <th style="padding:0.45rem 0.7rem;text-align:left;width:30px">#</th>
+                <th style="padding:0.45rem 0.7rem;text-align:left">名稱</th>
+                <th style="padding:0.45rem 0.7rem;text-align:left;width:60px">圖示</th>
+                <th style="padding:0.45rem 0.7rem;text-align:left;width:80px">顏色</th>
+                <th style="padding:0.45rem 0.7rem;text-align:center;width:70px">狀態</th>
+              </tr></thead>
+              <tbody id="importCatPreviewBody"></tbody>
+            </table>
+          </div>
         </div>
+
+        <!-- Events preview -->
+        <div id="importEvSection" style="display:none">
+          <div style="font-size:0.82rem;font-weight:700;color:#7dd3fc;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem">📋 大事紀 <span id="importEvCount"></span></div>
+          <div style="max-height:220px;overflow-y:auto;border-radius:8px;border:1px solid var(--border)">
+            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;min-width:auto">
+              <thead><tr style="background:var(--surface2);position:sticky;top:0">
+                <th style="padding:0.45rem 0.7rem;text-align:left;width:30px">#</th>
+                <th style="padding:0.45rem 0.7rem;text-align:left;width:60px">日期</th>
+                <th style="padding:0.45rem 0.7rem;text-align:left">標題</th>
+                <th style="padding:0.45rem 0.7rem;text-align:left">摘要</th>
+                <th style="padding:0.45rem 0.7rem;text-align:left">分類</th>
+                <th style="padding:0.45rem 0.7rem;text-align:center;width:50px">狀態</th>
+              </tr></thead>
+              <tbody id="importEvPreviewBody"></tbody>
+            </table>
+          </div>
+        </div>
+
         <div id="importErrors" style="margin-top:0.8rem;display:none">
           <div style="color:#fca5a5;font-size:0.83rem;padding:0.6rem 0.8rem;background:rgba(239,68,68,0.1);border-radius:8px;border:1px solid rgba(239,68,68,0.2)" id="importErrorList"></div>
         </div>
       </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('importModal')">取消</button>
@@ -1007,12 +1042,13 @@ function escHtml(str) {
 }
 
 // ── IMPORT ────────────────────────────────────────
-let importRows = [];
+let importCatRows = [];   // { rowNum, name, icon, color, isNew, valid, errors }
+let importEventRows = []; // { rowNum, year, month, day, title, summary, ... }
 
 function openImportModal() { resetImport(); openModal('importModal'); }
 
 function resetImport() {
-  importRows = [];
+  importCatRows = []; importEventRows = [];
   document.getElementById('importStep1').style.display = '';
   document.getElementById('importStep2').style.display = 'none';
   document.getElementById('importConfirmBtn').style.display = 'none';
@@ -1029,90 +1065,223 @@ function handleImportDrop(e) {
 function handleImportFile(file) {
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = (ev) => {
     try {
-      const wb = XLSX.read(e.target.result, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const range = XLSX.utils.decode_range(ws['!ref']);
-      range.s.r = 2;
-      parseImportRows(XLSX.utils.sheet_to_json(ws, { header: 1, range }));
+      const wb = XLSX.read(ev.target.result, { type: 'array' });
+      // New format: Sheet1=分類, Sheet2=大事紀
+      // Legacy format (1 sheet): treat as events only
+      const hasCatSheet = wb.SheetNames.length >= 2;
+      const catSheet   = hasCatSheet ? wb.Sheets[wb.SheetNames[0]] : null;
+      const evSheet    = hasCatSheet ? wb.Sheets[wb.SheetNames[1]] : wb.Sheets[wb.SheetNames[0]];
+
+      if (catSheet) parseCatSheet(catSheet);
+      parseEvSheet(evSheet);
+      showImportPreview();
     } catch (err) { showToast('Excel 解析失敗：' + err.message, 'error'); }
   };
   reader.readAsArrayBuffer(file);
 }
 
-function parseImportRows(rawRows) {
-  const errors = []; importRows = [];
-  rawRows.forEach((row, i) => {
-    if (!row || row.every(c => c === undefined || c === null || c === '')) return;
-    const rowNum = i + 3;
-    const year = row[0] ? parseInt(row[0]) : null;
-    const month = row[1] ? parseInt(row[1]) : null;
-    const day = row[2] ? parseInt(row[2]) : null;
-    const title = row[3] ? String(row[3]).trim() : '';
-    const summary = row[4] ? String(row[4]).trim() : '';
-    const detail = row[5] ? String(row[5]).trim() : '';
-    const catRaw = row[6] ? String(row[6]).trim() : '';
-    const image_url = row[7] ? String(row[7]).trim() : '';
-    const rowErrors = [];
-    if (!year || isNaN(year)) rowErrors.push('年份必填');
-    if (!title) rowErrors.push('標題必填');
-    if (!summary) rowErrors.push('摘要必填');
-    if (month && (month < 1 || month > 12)) rowErrors.push('月份需為 1-12');
-    if (day && (day < 1 || day > 31)) rowErrors.push('日需為 1-31');
-    const catNames = catRaw ? catRaw.split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
-    const catIds = catNames.map(name => { const f = allCategories.find(c => c.name === name); return f ? f.id : null; });
-    const unknownCats = catNames.filter((_, i) => !catIds[i]);
-    if (unknownCats.length) rowErrors.push(`未知分類：${unknownCats.join('、')}`);
-    importRows.push({ rowNum, year, month, day, title, summary, detail: detail||null, image_url: image_url||null, catIds: catIds.filter(Boolean), catNames, errors: rowErrors, valid: rowErrors.length === 0 });
-    if (rowErrors.length) errors.push(`第${rowNum}列：${rowErrors.join('、')}`);
-  });
-  showImportPreview(errors);
+function sheetRows(ws) {
+  if (!ws || !ws['!ref']) return [];
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  range.s.r = 2; // skip header + hint rows
+  return XLSX.utils.sheet_to_json(ws, { header: 1, range });
 }
 
-function showImportPreview(errors) {
-  if (importRows.length === 0) { showToast('未讀取到任何資料（請確認資料從第3列開始）', 'error'); return; }
+function parseCatSheet(ws) {
+  importCatRows = [];
+  sheetRows(ws).forEach((row, i) => {
+    if (!row || row.every(c => c == null || c === '')) return;
+    const rowNum = i + 3;
+    const name  = row[0] ? String(row[0]).trim() : '';
+    const icon  = row[1] ? String(row[1]).trim() : '';
+    const color = row[2] ? String(row[2]).trim() : '#1d7fe5';
+    const errors = [];
+    if (!name) errors.push('名稱必填');
+    const isNew = !allCategories.find(c => c.name === name);
+    importCatRows.push({ rowNum, name, icon, color: color || '#1d7fe5', isNew, errors, valid: errors.length === 0 });
+  });
+}
+
+function parseEvSheet(ws) {
+  importEventRows = [];
+  const errors = [];
+  // Build a merged category list: existing + new valid cats from import
+  const mergedCats = [
+    ...allCategories,
+    ...importCatRows.filter(c => c.valid && c.isNew).map(c => ({ name: c.name, id: null, color: c.color }))
+  ];
+
+  sheetRows(ws).forEach((row, i) => {
+    if (!row || row.every(c => c == null || c === '')) return;
+    const rowNum = i + 3;
+    const year      = row[0] ? parseInt(row[0]) : null;
+    const month     = row[1] ? parseInt(row[1]) : null;
+    const day       = row[2] ? parseInt(row[2]) : null;
+    const title     = row[3] ? String(row[3]).trim() : '';
+    const summary   = row[4] ? String(row[4]).trim() : '';
+    const detail    = row[5] ? String(row[5]).trim() : '';
+    const catRaw    = row[6] ? String(row[6]).trim() : '';
+    const image_url = row[7] ? String(row[7]).trim() : '';
+
+    const rowErrors = [];
+    if (!year || isNaN(year)) rowErrors.push('年份必填');
+    if (!title)   rowErrors.push('標題必填');
+    if (!summary) rowErrors.push('摘要必填');
+    if (month && (month < 1 || month > 12)) rowErrors.push('月份需為 1-12');
+    if (day   && (day   < 1 || day   > 31)) rowErrors.push('日需為 1-31');
+
+    const catNames = catRaw ? catRaw.split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
+    const unknownCats = catNames.filter(n => !mergedCats.find(c => c.name === n));
+    if (unknownCats.length) rowErrors.push(`未知分類：${unknownCats.join('、')}`);
+
+    importEventRows.push({
+      rowNum, year, month, day, title, summary,
+      detail: detail || null, image_url: image_url || null,
+      catNames, errors: rowErrors, valid: rowErrors.length === 0
+    });
+    if (rowErrors.length) errors.push(`第${rowNum}列：${rowErrors.join('、')}`);
+  });
+  return errors;
+}
+
+function showImportPreview() {
+  const totalCats = importCatRows.length;
+  const newCats   = importCatRows.filter(r => r.valid && r.isNew).length;
+  const skipCats  = importCatRows.filter(r => r.valid && !r.isNew).length;
+  const validEvs  = importEventRows.filter(r => r.valid).length;
+  const errEvs    = importEventRows.filter(r => !r.valid).length;
+
+  if (totalCats === 0 && importEventRows.length === 0) {
+    showToast('未讀取到任何資料（請確認資料從第 3 列開始）', 'error'); return;
+  }
+
   document.getElementById('importStep1').style.display = 'none';
   document.getElementById('importStep2').style.display = '';
-  const validCount = importRows.filter(r => r.valid).length;
-  document.getElementById('importSummary').innerHTML =
-    `共讀取 <strong style="color:var(--text)">${importRows.length}</strong> 筆，` +
-    `可匯入 <strong style="color:#4ade80">${validCount}</strong> 筆` +
-    (errors.length ? `，有錯誤 <strong style="color:#f87171">${errors.length}</strong> 筆` : '');
-  document.getElementById('importPreviewBody').innerHTML = importRows.map(r => {
-    const dateStr = [r.year, r.month, r.day].filter(Boolean).join('/');
-    return `<tr style="${r.valid ? '' : 'background:rgba(239,68,68,0.06)'}">
-      <td style="padding:0.45rem 0.7rem;color:var(--text-muted)">${r.rowNum}</td>
-      <td style="padding:0.45rem 0.7rem;white-space:nowrap">${escHtml(dateStr)}</td>
-      <td style="padding:0.45rem 0.7rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(r.title)}">${escHtml(r.title)}</td>
-      <td style="padding:0.45rem 0.7rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted)">${escHtml(r.summary)}</td>
-      <td style="padding:0.45rem 0.7rem">${r.catNames.map(n=>`<span class="tag" style="background:${allCategories.find(c=>c.name===n)?.color||'#6b7280'}">${n}</span>`).join(' ')||'—'}</td>
-      <td style="padding:0.45rem 0.7rem;text-align:center" title="${escHtml(r.errors.join('、'))}">${r.valid?'✅':'❌'}</td>
-    </tr>`;
-  }).join('');
-  if (errors.length) {
+
+  // Summary bar
+  const parts = [];
+  if (totalCats)              parts.push(`分類 <strong style="color:var(--text)">${totalCats}</strong> 筆（新增 ${newCats}，已存在跳過 ${skipCats}）`);
+  if (importEventRows.length) parts.push(`大事紀 <strong style="color:var(--text)">${importEventRows.length}</strong> 筆，可匯入 <strong style="color:#4ade80">${validEvs}</strong> 筆${errEvs ? `，錯誤 <strong style="color:#f87171">${errEvs}</strong> 筆` : ''}`);
+  document.getElementById('importSummary').innerHTML = parts.join('　|　');
+
+  // Categories preview table
+  if (totalCats > 0) {
+    document.getElementById('importCatSection').style.display = '';
+    document.getElementById('importCatCount').textContent = `(${totalCats} 筆)`;
+    document.getElementById('importCatPreviewBody').innerHTML = importCatRows.map(r => `
+      <tr style="${!r.valid ? 'background:rgba(239,68,68,0.06)' : ''}">
+        <td style="padding:0.4rem 0.7rem;color:var(--text-muted)">${r.rowNum}</td>
+        <td style="padding:0.4rem 0.7rem">${escHtml(r.name)}</td>
+        <td style="padding:0.4rem 0.7rem;font-size:1.1rem">${escHtml(r.icon)||'—'}</td>
+        <td style="padding:0.4rem 0.7rem"><span style="display:inline-flex;align-items:center;gap:0.4rem"><span style="width:12px;height:12px;border-radius:50%;background:${r.color};display:inline-block"></span>${escHtml(r.color)}</span></td>
+        <td style="padding:0.4rem 0.7rem;text-align:center">${!r.valid ? '❌' : r.isNew ? '<span style="color:#4ade80;font-size:0.78rem;font-weight:600">新增</span>' : '<span style="color:var(--text-muted);font-size:0.78rem">已存在</span>'}</td>
+      </tr>`).join('');
+  } else {
+    document.getElementById('importCatSection').style.display = 'none';
+  }
+
+  // Events preview table
+  if (importEventRows.length > 0) {
+    document.getElementById('importEvSection').style.display = '';
+    document.getElementById('importEvCount').textContent = `(${importEventRows.length} 筆)`;
+    // Merge category list for colour lookup
+    const mergedCats = [
+      ...allCategories,
+      ...importCatRows.filter(c => c.valid && c.isNew).map(c => ({ name: c.name, color: c.color }))
+    ];
+    document.getElementById('importEvPreviewBody').innerHTML = importEventRows.map(r => {
+      const dateStr = [r.year, r.month, r.day].filter(Boolean).join('/');
+      return `<tr style="${r.valid ? '' : 'background:rgba(239,68,68,0.06)'}">
+        <td style="padding:0.4rem 0.7rem;color:var(--text-muted)">${r.rowNum}</td>
+        <td style="padding:0.4rem 0.7rem;white-space:nowrap">${escHtml(dateStr)}</td>
+        <td style="padding:0.4rem 0.7rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(r.title)}">${escHtml(r.title)}</td>
+        <td style="padding:0.4rem 0.7rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted)">${escHtml(r.summary)}</td>
+        <td style="padding:0.4rem 0.7rem">${r.catNames.map(n => `<span class="tag" style="background:${mergedCats.find(c=>c.name===n)?.color||'#6b7280'}">${escHtml(n)}</span>`).join(' ') || '—'}</td>
+        <td style="padding:0.4rem 0.7rem;text-align:center" title="${escHtml(r.errors.join('、'))}">${r.valid ? '✅' : '❌'}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    document.getElementById('importEvSection').style.display = 'none';
+  }
+
+  // Errors
+  const evErrors = importEventRows.filter(r => !r.valid).map(r => `第${r.rowNum}列：${r.errors.join('、')}`);
+  const catErrors = importCatRows.filter(r => !r.valid).map(r => `分類第${r.rowNum}列：${r.errors.join('、')}`);
+  const allErrors = [...catErrors, ...evErrors];
+  if (allErrors.length) {
     document.getElementById('importErrors').style.display = '';
-    document.getElementById('importErrorList').innerHTML = '⚠️ 錯誤列不會被匯入：<br>' + errors.map(e => escHtml(e)).join('<br>');
-  } else { document.getElementById('importErrors').style.display = 'none'; }
-  if (validCount > 0) { const btn = document.getElementById('importConfirmBtn'); btn.style.display = ''; btn.textContent = `匯入 ${validCount} 筆`; }
+    document.getElementById('importErrorList').innerHTML = '⚠️ 以下列有錯誤，不會被匯入：<br>' + allErrors.map(e => escHtml(e)).join('<br>');
+  } else {
+    document.getElementById('importErrors').style.display = 'none';
+  }
+
+  const canImport = newCats > 0 || validEvs > 0;
+  if (canImport) {
+    const btn = document.getElementById('importConfirmBtn');
+    btn.style.display = '';
+    const parts2 = [];
+    if (newCats)    parts2.push(`${newCats} 個分類`);
+    if (validEvs)   parts2.push(`${validEvs} 筆大事紀`);
+    btn.textContent = `匯入 ${parts2.join(' + ')}`;
+  }
 }
 
 async function executeImport() {
   const btn = document.getElementById('importConfirmBtn');
-  const validRows = importRows.filter(r => r.valid);
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 匯入中...';
-  let success = 0, fail = 0;
-  for (const row of validRows) {
+
+  let catOk = 0, catFail = 0, evOk = 0, evFail = 0;
+
+  // Step 1: Import new categories
+  const newCatRows = importCatRows.filter(r => r.valid && r.isNew);
+  for (const row of newCatRows) {
     try {
-      const { data, error } = await client.from('events').insert([{ year: row.year, month: row.month, day: row.day, title: row.title, summary: row.summary, detail: row.detail, image_url: row.image_url, user_id: currentUser.id }]).select();
+      const { error } = await client.from('categories').insert([{
+        name: row.name, icon: row.icon || null, color: row.color, user_id: currentUser.id
+      }]);
       if (error) throw error;
-      if (row.catIds.length) await client.from('event_categories').insert(row.catIds.map(cid => ({ event_id: data[0].id, category_id: cid })));
-      success++;
-    } catch { fail++; }
+      catOk++;
+    } catch { catFail++; }
   }
-  btn.disabled = false; btn.textContent = `匯入 ${validRows.length} 筆`;
-  showToast(`匯入完成：成功 ${success} 筆${fail ? `，失敗 ${fail} 筆` : ''}`, success > 0 ? 'success' : 'error');
-  closeModal('importModal'); await loadEvents();
+
+  // Reload categories so new ones have IDs
+  if (newCatRows.length > 0) await loadCategories();
+
+  // Step 2: Import events with freshly resolved category IDs
+  const validEvs = importEventRows.filter(r => r.valid);
+  for (const row of validEvs) {
+    try {
+      const catIds = row.catNames
+        .map(n => allCategories.find(c => c.name === n)?.id)
+        .filter(Boolean);
+
+      const { data, error } = await client.from('events').insert([{
+        year: row.year, month: row.month, day: row.day,
+        title: row.title, summary: row.summary,
+        detail: row.detail, image_url: row.image_url,
+        user_id: currentUser.id
+      }]).select();
+      if (error) throw error;
+
+      if (catIds.length) {
+        await client.from('event_categories').insert(catIds.map(cid => ({ event_id: data[0].id, category_id: cid })));
+      }
+      evOk++;
+    } catch { evFail++; }
+  }
+
+  btn.disabled = false; btn.textContent = '匯入';
+  const msg = [
+    catOk  ? `分類新增 ${catOk} 個` : '',
+    catFail? `分類失敗 ${catFail} 個` : '',
+    evOk   ? `大事紀成功 ${evOk} 筆` : '',
+    evFail ? `大事紀失敗 ${evFail} 筆` : ''
+  ].filter(Boolean).join('，');
+  showToast(msg || '無資料匯入', (catOk + evOk) > 0 ? 'success' : 'error');
+  closeModal('importModal');
+  await loadEvents();
 }
 
 init();
