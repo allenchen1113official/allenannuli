@@ -529,7 +529,7 @@
 <header>
   <a href="admin.html" class="header-admin" id="adminLink">後台管理 →</a>
   <div class="header-name" id="headerName">陳艾倫</div>
-  <div class="header-sub" id="headerSub">Allen Chen &nbsp;·&nbsp; 人生大事紀 1975 – 2026</div>
+  <div class="header-sub" id="headerSub">Allen Chen &nbsp;·&nbsp; 人生大事紀</div>
   <div class="stats-bar" id="statsBar"></div>
 </header>
 
@@ -539,7 +539,7 @@
     <div class="rings-hd">
       <div>
         <div class="rings-title">🌳 生命年輪</div>
-        <div class="rings-sub">1975 – 2026 &nbsp;·&nbsp; 每大輪 10 年，每小輪 1 年</div>
+        <div class="rings-sub" id="ringsSub">每大輪 10 年，每小輪 1 年</div>
       </div>
       <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
         <select id="ringCatSelect" class="rings-cat-select" onchange="setRingCatFilter(this.value)">
@@ -607,6 +607,22 @@ async function loadData(userId) {
   allEvents = ev.data || [];
   allCategories = cat.data || [];
   allStats = st.data || [];
+}
+
+// ── YEAR RANGE ───────────────────────────────────
+function getEventYearRange() {
+  if (!allEvents.length) return { start: new Date().getFullYear(), end: new Date().getFullYear() };
+  const years = allEvents.map(e => e.year);
+  return { start: Math.min(...years), end: Math.max(...years) };
+}
+
+function renderHeader() {
+  const { start, end } = getEventYearRange();
+  document.getElementById('headerSub').innerHTML =
+    `Allen Chen &nbsp;·&nbsp; 人生大事紀 ${start} – ${end}`;
+  document.title = `陳艾倫 · 人生大事紀 ${start}–${end}`;
+  const ringsSub = document.getElementById('ringsSub');
+  if (ringsSub) ringsSub.textContent = `${start} – ${end} · 每大輪 10 年，每小輪 1 年`;
 }
 
 // ── RENDER STATS ──────────────────────────────────
@@ -815,6 +831,7 @@ async function init() {
     document.getElementById('adminLink').href = currentUser ? 'admin.html' : 'login.html?next=admin.html';
 
     await loadData(currentUser?.id || null);
+    renderHeader();
     renderStats();
     renderFilterBar();
     renderTimeline();
@@ -880,7 +897,7 @@ function renderTreeRings() {
   const container = document.getElementById('ringsContainer');
   if (!container) return;
 
-  const START = 1975, END = Math.max(new Date().getFullYear(), 2026);
+  const { start: START, end: END } = getEventYearRange();
   const TOTAL = END - START + 1;
   const DECADES = Math.ceil(TOTAL / 10);
 
