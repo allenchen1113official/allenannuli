@@ -464,9 +464,9 @@
   /* ── TREE RINGS ── */
   .rings-section {
     border-top: 1px solid var(--border);
-    padding: 1.8rem 2rem 0.8rem;
+    padding: 1.8rem 2rem 1.2rem;
   }
-  .rings-wrap { max-width: 600px; margin: 0 auto; }
+  .rings-wrap { max-width: 700px; margin: 0 auto; }
   .rings-hd {
     display: flex; align-items: flex-start;
     justify-content: space-between;
@@ -495,8 +495,19 @@
   }
   .rings-track.on .rings-thumb { transform: translateX(16px); }
   .rings-container { display: flex; justify-content: center; align-items: center; }
+  .rings-legend {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 0.5rem 1.2rem; margin-top: 0.8rem;
+    padding: 0 0.25rem; font-size: 0.75rem; color: var(--text-muted);
+  }
+  .rings-legend-item { display: flex; align-items: center; gap: 0.35rem; }
+  .rings-legend-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.6); flex-shrink: 0;
+  }
   @media (max-width: 480px) {
-    .rings-section { padding: 1.4rem 1rem 0.5rem; }
+    .rings-section { padding: 1.4rem 1rem 0.8rem; }
+    .rings-legend { font-size: 0.7rem; gap: 0.4rem 1rem; }
   }
 </style>
 </head>
@@ -523,6 +534,7 @@
       </div>
     </div>
     <div class="rings-container" id="ringsContainer"></div>
+    <div class="rings-legend" id="ringsLegend"></div>
   </div>
 </section>
 
@@ -636,6 +648,7 @@ function renderFilterBar() {
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       renderTimeline();
+      renderTreeRings();
     });
     bar.appendChild(btn);
   });
@@ -794,6 +807,7 @@ async function init() {
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       renderTimeline();
+      renderTreeRings();
     });
 
     renderTreeRings();
@@ -810,6 +824,7 @@ async function init() {
 
 // ── TREE RINGS ─────────────────────────────────────
 let showMinorRings = true;
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5)); // ≈137.5°
 
 function toggleRings() {
   showMinorRings = !showMinorRings;
@@ -826,14 +841,14 @@ function renderTreeRings() {
   const TOTAL = END - START + 1;
   const DECADES = Math.ceil(TOTAL / 10);
 
-  const SZ = Math.min(container.offsetWidth || 560, 560);
+  const raw = container.offsetWidth;
+  const SZ = Math.min(raw > 0 ? raw : 560, 560);
   const cx = SZ / 2, cy = SZ / 2;
   const CENTER_R = Math.round(SZ * 0.057);
-  const outerPad = Math.round(SZ * 0.048);
+  const outerPad = Math.round(SZ * 0.05);
   const availR = SZ / 2 - CENTER_R - outerPad;
   const rW = showMinorRings ? availR / TOTAL : availR / DECADES;
 
-  // Warm amber/wood palette — same colour tone, dark inner → light outer
   function woodColor(idx, total, decadeIdx, alt) {
     const hue = 28 + decadeIdx * 1.8;
     const sat = 56 - decadeIdx * 1.8;
@@ -844,8 +859,6 @@ function renderTreeRings() {
   const els = [];
 
   if (showMinorRings) {
-    // ── Minor mode: one ring per year ──
-    // Draw outer → inner so inner circles cover outer ones
     for (let y = END; y >= START; y--) {
       const i = y - START;
       const dIdx = Math.floor(i / 10);
@@ -853,12 +866,10 @@ function renderTreeRings() {
       const R = (CENTER_R + (i + 1) * rW).toFixed(2);
       els.push(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="${woodColor(i, TOTAL, dIdx, alt)}"/>`);
     }
-    // Decade separator rings
     for (let d = 1; d < DECADES; d++) {
       const R = (CENTER_R + d * 10 * rW).toFixed(2);
       els.push(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(0,0,0,0.38)" stroke-width="1.5"/>`);
     }
-    // Decade labels evenly spread around circle
     for (let d = 0; d < DECADES; d++) {
       const dStart = START + d * 10;
       const halfSpan = Math.min(4.5, (Math.min(dStart + 9, END) - dStart) / 2);
@@ -870,17 +881,14 @@ function renderTreeRings() {
       els.push(`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="${fs}" font-family="'Segoe UI',system-ui" font-weight="700" fill="rgba(255,255,255,0.92)">${dStart}</text>`);
     }
   } else {
-    // ── Major mode: one wide ring per decade ──
     for (let d = DECADES - 1; d >= 0; d--) {
       const dStart = START + d * 10;
       const dEnd = Math.min(dStart + 9, END);
       const i = d * 10;
       const R = (CENTER_R + (d + 1) * rW).toFixed(2);
       els.push(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="${woodColor(i, TOTAL, d, false)}"/>`);
-      // Inner separator
       const rIn = (CENTER_R + d * rW).toFixed(2);
       els.push(`<circle cx="${cx}" cy="${cy}" r="${rIn}" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="2"/>`);
-      // Label in band, angle spread evenly
       const midR = CENTER_R + (d + 0.5) * rW;
       const angle = -Math.PI / 2 + (d / DECADES) * 2 * Math.PI;
       const lx = (cx + Math.cos(angle) * midR).toFixed(1);
@@ -897,11 +905,91 @@ function renderTreeRings() {
   els.push(`<text x="${cx}" y="${cy - CENTER_R * 0.15}" text-anchor="middle" dominant-baseline="middle" font-size="${cfs}" font-family="'Segoe UI',system-ui" font-weight="800" fill="rgba(255,255,255,0.95)">1975</text>`);
   els.push(`<text x="${cx}" y="${cy + CENTER_R * 0.42}" text-anchor="middle" dominant-baseline="middle" font-size="${Math.max(7, CENTER_R * 0.35).toFixed(1)}" font-family="'Segoe UI',system-ui" fill="rgba(255,255,255,0.65)">誕生</text>`);
 
-  // Outermost year label
-  const outerR = CENTER_R + TOTAL * rW + 8;
-  els.push(`<text x="${cx}" y="${(cy - outerR).toFixed(1)}" text-anchor="middle" dominant-baseline="auto" font-size="11" font-family="'Segoe UI',system-ui" fill="rgba(255,255,255,0.45)">${END}</text>`);
+  if (showMinorRings) {
+    const outerR = CENTER_R + TOTAL * rW + 8;
+    els.push(`<text x="${cx}" y="${(cy - outerR).toFixed(1)}" text-anchor="middle" dominant-baseline="auto" font-size="11" font-family="'Segoe UI',system-ui" fill="rgba(255,255,255,0.45)">${END}</text>`);
+  }
 
-  container.innerHTML = `<svg viewBox="0 0 ${SZ} ${SZ}" width="${SZ}" height="${SZ}" style="max-width:100%;height:auto;display:block">\n  ${els.join('\n  ')}\n</svg>`;
+  // ── Event dots ──
+  // dotR: size proportional to ring width, capped
+  const dotR = showMinorRings
+    ? Math.max(3, Math.min(5.5, rW * 0.72))
+    : Math.max(5, Math.min(9, rW * 0.11));
+  const hitR = dotR + 5;
+
+  // Use filtered events so dots match the active category filter
+  const visibleEvents = filterEvents(allEvents);
+  const eventsByYear = {};
+  visibleEvents.forEach(ev => {
+    if (ev.year >= START && ev.year <= END)
+      (eventsByYear[ev.year] = eventsByYear[ev.year] || []).push(ev);
+  });
+
+  // Draw hit areas first, then visible dots (dots on top)
+  const hitEls = [], dotEls = [];
+  Object.entries(eventsByYear).forEach(([year, events]) => {
+    const i = parseInt(year) - START;
+    let ringR;
+    if (showMinorRings) {
+      ringR = CENTER_R + (i + 0.5) * rW;
+    } else {
+      const d = Math.floor(i / 10);
+      const within = (i % 10 + 0.5) / 10;
+      ringR = CENTER_R + (d + within) * rW;
+    }
+    const count = events.length;
+    events.forEach((ev, idx) => {
+      // Golden-angle base per year + even spread for same-year events
+      const angle = GOLDEN_ANGLE * i + (idx / Math.max(count, 1)) * 2 * Math.PI;
+      const dx = (cx + Math.cos(angle) * ringR).toFixed(1);
+      const dy = (cy + Math.sin(angle) * ringR).toFixed(1);
+      const cats = getEventCategories(ev);
+      const color = cats.length > 0 ? cats[0].color : '#1d7fe5';
+      const eid = ev.id;
+      hitEls.push(`<circle cx="${dx}" cy="${dy}" r="${hitR}" fill="transparent" class="re-hit" data-eid="${eid}" style="cursor:pointer"/>`);
+      dotEls.push(`<circle cx="${dx}" cy="${dy}" r="${dotR}" fill="${color}" stroke="rgba(255,255,255,0.82)" stroke-width="1.5" class="re-dot" data-eid="${eid}" style="cursor:pointer"/>`);
+    });
+  });
+
+  container.innerHTML = `<svg viewBox="0 0 ${SZ} ${SZ}" width="${SZ}" height="${SZ}" style="max-width:100%;height:auto;display:block">\n  ${[...els, ...hitEls, ...dotEls].join('\n  ')}\n</svg>`;
+
+  // Wire interactions
+  const svg = container.querySelector('svg');
+  svg.querySelectorAll('.re-hit, .re-dot').forEach(el => {
+    const ev = allEvents.find(e => e.id === el.dataset.eid);
+    if (!ev) return;
+    if (isMobile()) {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        const popup = document.getElementById('detailPopup');
+        if (popup.classList.contains('pinned') && popup.dataset.eventId === ev.id) { hidePopup(); return; }
+        showPopupPinned(ev);
+      });
+    } else {
+      el.addEventListener('mouseenter', e => showPopup(e, ev));
+      el.addEventListener('mousemove', e => movePopup(e));
+      el.addEventListener('mouseleave', hidePopup);
+    }
+  });
+
+  renderRingsLegend();
+}
+
+function renderRingsLegend() {
+  const el = document.getElementById('ringsLegend');
+  if (!el) return;
+  const visibleEvents = filterEvents(allEvents);
+  const usedCatIds = new Set();
+  visibleEvents.forEach(ev => getEventCategories(ev).forEach(c => usedCatIds.add(c.id)));
+  const usedCats = allCategories.filter(c => usedCatIds.has(c.id));
+  if (!usedCats.length) { el.innerHTML = ''; return; }
+  el.innerHTML = usedCats.map(c =>
+    `<div class="rings-legend-item">
+      <div class="rings-legend-dot" style="background:${c.color}"></div>
+      <span>${c.icon ? escHtml(c.icon) + ' ' : ''}${escHtml(c.name)}</span>
+    </div>`
+  ).join('') +
+  `<div class="rings-legend-item" style="margin-left:auto;opacity:0.45;font-size:0.7rem">${visibleEvents.length} 個紀事</div>`;
 }
 
 init();
