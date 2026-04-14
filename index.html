@@ -481,6 +481,19 @@
     transition: color 0.15s;
   }
   .rings-toggle-lbl:hover { color: var(--text); }
+  .rings-cat-select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 0.28rem 0.65rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .rings-cat-select:focus { outline: none; border-color: var(--accent); }
+  .rings-cat-select option { background: var(--surface2); }
   .rings-track {
     width: 36px; height: 20px; flex-shrink: 0;
     background: var(--border); border-radius: 999px;
@@ -528,9 +541,14 @@
         <div class="rings-title">🌳 生命年輪</div>
         <div class="rings-sub">1975 – 2026 &nbsp;·&nbsp; 每大輪 10 年，每小輪 1 年</div>
       </div>
-      <div class="rings-toggle-lbl" id="ringsToggleLbl" onclick="toggleRings()">
-        <div class="rings-track on" id="ringsTrack"><div class="rings-thumb"></div></div>
-        <span id="ringsToggleTxt">顯示年份細環</span>
+      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
+        <select id="ringCatSelect" class="rings-cat-select" onchange="setRingCatFilter(this.value)">
+          <option value="all">全部紀事</option>
+        </select>
+        <div class="rings-toggle-lbl" id="ringsToggleLbl" onclick="toggleRings()">
+          <div class="rings-track on" id="ringsTrack"><div class="rings-thumb"></div></div>
+          <span id="ringsToggleTxt">顯示年份細環</span>
+        </div>
       </div>
     </div>
     <div class="rings-container" id="ringsContainer"></div>
@@ -648,7 +666,6 @@ function renderFilterBar() {
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       renderTimeline();
-      renderTreeRings();
     });
     bar.appendChild(btn);
   });
@@ -807,9 +824,9 @@ async function init() {
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       renderTimeline();
-      renderTreeRings();
     });
 
+    initRingCatSelect();
     renderTreeRings();
     window.addEventListener('resize', () => { renderStats(); renderTreeRings(); });
   } catch (err) {
@@ -824,6 +841,7 @@ async function init() {
 
 // ── TREE RINGS ─────────────────────────────────────
 let showMinorRings = true;
+let ringCatFilter = 'all';
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5)); // ≈137.5°
 
 function toggleRings() {
@@ -831,6 +849,31 @@ function toggleRings() {
   document.getElementById('ringsTrack').classList.toggle('on', showMinorRings);
   document.getElementById('ringsToggleTxt').textContent = showMinorRings ? '顯示年份細環' : '僅顯示大輪';
   renderTreeRings();
+}
+
+function setRingCatFilter(val) {
+  ringCatFilter = val;
+  renderTreeRings();
+}
+
+function initRingCatSelect() {
+  const sel = document.getElementById('ringCatSelect');
+  if (!sel) return;
+  sel.innerHTML = `<option value="all">全部紀事</option>` +
+    allCategories.map(c =>
+      `<option value="${c.id}">${c.icon ? c.icon + ' ' : ''}${escHtml(c.name)}</option>`
+    ).join('');
+  // Default to 里程碑 category if it exists
+  const milestone = allCategories.find(c => c.name.includes('里程'));
+  if (milestone) {
+    ringCatFilter = milestone.id;
+    sel.value = milestone.id;
+  }
+}
+
+function getRingEvents() {
+  if (ringCatFilter === 'all') return allEvents;
+  return allEvents.filter(ev => getEventCategories(ev).some(c => c.id === ringCatFilter));
 }
 
 function renderTreeRings() {
@@ -917,8 +960,8 @@ function renderTreeRings() {
     : Math.max(5, Math.min(9, rW * 0.11));
   const hitR = dotR + 5;
 
-  // Use filtered events so dots match the active category filter
-  const visibleEvents = filterEvents(allEvents);
+  // Use the rings' own independent category filter
+  const visibleEvents = getRingEvents();
   const eventsByYear = {};
   visibleEvents.forEach(ev => {
     if (ev.year >= START && ev.year <= END)
@@ -978,7 +1021,7 @@ function renderTreeRings() {
 function renderRingsLegend() {
   const el = document.getElementById('ringsLegend');
   if (!el) return;
-  const visibleEvents = filterEvents(allEvents);
+  const visibleEvents = getRingEvents();
   const usedCatIds = new Set();
   visibleEvents.forEach(ev => getEventCategories(ev).forEach(c => usedCatIds.add(c.id)));
   const usedCats = allCategories.filter(c => usedCatIds.has(c.id));
