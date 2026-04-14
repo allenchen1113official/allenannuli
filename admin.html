@@ -736,17 +736,20 @@ function renderStatsTable() {
   }).join('');
 }
 
-function renderEventCatGrid() {
+function renderEventCatGrid(clearSelection = false) {
   const grid = document.getElementById('eventCatGrid');
-  const selected = Array.from(grid.querySelectorAll('.cat-checkbox.selected')).map(el => el.dataset.id);
-  grid.innerHTML = allCategories.map(c => `
+  const selected = clearSelection ? [] : Array.from(grid.querySelectorAll('.cat-checkbox.selected')).map(el => el.dataset.id);
+  grid.innerHTML = allCategories.length === 0
+    ? `<div style="color:var(--text-muted);font-size:0.85rem">尚無分類，請先至「分類管理」新增</div>`
+    : allCategories.map(c => `
     <label class="cat-checkbox ${selected.includes(c.id)?'selected':''}" data-id="${c.id}">
       <input type="checkbox" value="${c.id}" ${selected.includes(c.id)?'checked':''}>
       <span class="tag-dot" style="background:${c.color}"></span>
       ${c.icon||''} ${escHtml(c.name)}
     </label>`).join('');
   grid.querySelectorAll('.cat-checkbox').forEach(label => {
-    label.addEventListener('click', () => {
+    label.addEventListener('click', e => {
+      e.preventDefault();
       label.classList.toggle('selected');
       label.querySelector('input').checked = label.classList.contains('selected');
     });
@@ -757,7 +760,7 @@ function renderEventCatGrid() {
 function openEventModal(id) {
   document.getElementById('eventModalTitle').textContent = id ? '編輯紀事' : '新增紀事';
   ['eventId','eventYear','eventMonth','eventDay','eventTitle','eventSummary','eventDetail','eventImage'].forEach(k => document.getElementById(k).value = '');
-  renderEventCatGrid();
+  renderEventCatGrid(true);
   if (id) {
     const ev = allEvents.find(e => e.id === id);
     if (!ev) return;
