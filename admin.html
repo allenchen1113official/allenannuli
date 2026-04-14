@@ -510,8 +510,11 @@
     </div>
     <div class="modal-body">
       <div id="importStep1">
-        <div style="background:rgba(29,127,229,0.08);border:1px solid rgba(29,127,229,0.2);border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.85rem;color:var(--text-muted);line-height:1.7">
-          請使用「<strong style="color:#7dd3fc">大事紀匯入範本.xlsx</strong>」填入資料後上傳。<br>
+        <div style="background:rgba(29,127,229,0.08);border:1px solid rgba(29,127,229,0.2);border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.85rem;color:var(--text-muted);line-height:1.8">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.6rem;margin-bottom:0.5rem">
+            <span>請使用官方範本填入資料後上傳：</span>
+            <a href="大事紀匯入範本.xlsx" download style="display:inline-flex;align-items:center;gap:0.35rem;background:linear-gradient(135deg,#1d7fe5,#0ea5e9);color:white;padding:0.35rem 0.9rem;border-radius:8px;text-decoration:none;font-weight:600;font-size:0.82rem;transition:opacity 0.15s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">⬇ 下載範本</a>
+          </div>
           欄位順序：年份* | 月份 | 日 | 標題* | 摘要* | 詳細說明 | 分類（逗號分隔） | 圖片網址<br>
           第 1 列為標題列，第 2 列為提示列，資料從<strong style="color:#7dd3fc">第 3 列</strong>開始讀取。
         </div>

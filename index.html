@@ -460,6 +460,44 @@
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* ── TREE RINGS ── */
+  .rings-section {
+    border-top: 1px solid var(--border);
+    padding: 1.8rem 2rem 0.8rem;
+  }
+  .rings-wrap { max-width: 600px; margin: 0 auto; }
+  .rings-hd {
+    display: flex; align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.3rem; flex-wrap: wrap; gap: 0.8rem;
+  }
+  .rings-title { font-size: 1rem; font-weight: 700; letter-spacing: 0.01em; }
+  .rings-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem; }
+  .rings-toggle-lbl {
+    display: flex; align-items: center; gap: 0.5rem;
+    cursor: pointer; user-select: none;
+    font-size: 0.83rem; color: var(--text-muted);
+    transition: color 0.15s;
+  }
+  .rings-toggle-lbl:hover { color: var(--text); }
+  .rings-track {
+    width: 36px; height: 20px; flex-shrink: 0;
+    background: var(--border); border-radius: 999px;
+    position: relative; transition: background 0.2s;
+  }
+  .rings-track.on { background: var(--accent); }
+  .rings-thumb {
+    position: absolute; width: 14px; height: 14px;
+    background: white; border-radius: 50%;
+    top: 3px; left: 3px; transition: transform 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
+  .rings-track.on .rings-thumb { transform: translateX(16px); }
+  .rings-container { display: flex; justify-content: center; align-items: center; }
+  @media (max-width: 480px) {
+    .rings-section { padding: 1.4rem 1rem 0.5rem; }
+  }
 </style>
 </head>
 <body>
@@ -470,6 +508,23 @@
   <div class="header-sub" id="headerSub">Allen Chen &nbsp;·&nbsp; 人生大事紀 1975 – 2026</div>
   <div class="stats-bar" id="statsBar"></div>
 </header>
+
+<!-- TREE RINGS SECTION -->
+<section class="rings-section">
+  <div class="rings-wrap">
+    <div class="rings-hd">
+      <div>
+        <div class="rings-title">🌳 生命年輪</div>
+        <div class="rings-sub">1975 – 2026 &nbsp;·&nbsp; 每大輪 10 年，每小輪 1 年</div>
+      </div>
+      <div class="rings-toggle-lbl" id="ringsToggleLbl" onclick="toggleRings()">
+        <div class="rings-track on" id="ringsTrack"><div class="rings-thumb"></div></div>
+        <span id="ringsToggleTxt">顯示年份細環</span>
+      </div>
+    </div>
+    <div class="rings-container" id="ringsContainer"></div>
+  </div>
+</section>
 
 <div class="filter-bar" id="filterBar">
   <button class="filter-btn all active" data-id="all">全部</button>
@@ -741,7 +796,8 @@ async function init() {
       renderTimeline();
     });
 
-    window.addEventListener('resize', renderStats);
+    renderTreeRings();
+    window.addEventListener('resize', () => { renderStats(); renderTreeRings(); });
   } catch (err) {
     console.error(err);
     document.getElementById('timelineContainer').innerHTML = `
@@ -750,6 +806,102 @@ async function init() {
         <div>載入失敗：${escHtml(err.message)}</div>
       </div>`;
   }
+}
+
+// ── TREE RINGS ─────────────────────────────────────
+let showMinorRings = true;
+
+function toggleRings() {
+  showMinorRings = !showMinorRings;
+  document.getElementById('ringsTrack').classList.toggle('on', showMinorRings);
+  document.getElementById('ringsToggleTxt').textContent = showMinorRings ? '顯示年份細環' : '僅顯示大輪';
+  renderTreeRings();
+}
+
+function renderTreeRings() {
+  const container = document.getElementById('ringsContainer');
+  if (!container) return;
+
+  const START = 1975, END = Math.max(new Date().getFullYear(), 2026);
+  const TOTAL = END - START + 1;
+  const DECADES = Math.ceil(TOTAL / 10);
+
+  const SZ = Math.min(container.offsetWidth || 560, 560);
+  const cx = SZ / 2, cy = SZ / 2;
+  const CENTER_R = Math.round(SZ * 0.057);
+  const outerPad = Math.round(SZ * 0.048);
+  const availR = SZ / 2 - CENTER_R - outerPad;
+  const rW = showMinorRings ? availR / TOTAL : availR / DECADES;
+
+  // Warm amber/wood palette — same colour tone, dark inner → light outer
+  function woodColor(idx, total, decadeIdx, alt) {
+    const hue = 28 + decadeIdx * 1.8;
+    const sat = 56 - decadeIdx * 1.8;
+    const L = 17 + (idx / (total - 1)) * 55 + (alt ? 5 : 0);
+    return `hsl(${hue.toFixed(1)},${sat.toFixed(1)}%,${Math.min(L, 78).toFixed(1)}%)`;
+  }
+
+  const els = [];
+
+  if (showMinorRings) {
+    // ── Minor mode: one ring per year ──
+    // Draw outer → inner so inner circles cover outer ones
+    for (let y = END; y >= START; y--) {
+      const i = y - START;
+      const dIdx = Math.floor(i / 10);
+      const alt = i % 2 === 1;
+      const R = (CENTER_R + (i + 1) * rW).toFixed(2);
+      els.push(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="${woodColor(i, TOTAL, dIdx, alt)}"/>`);
+    }
+    // Decade separator rings
+    for (let d = 1; d < DECADES; d++) {
+      const R = (CENTER_R + d * 10 * rW).toFixed(2);
+      els.push(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(0,0,0,0.38)" stroke-width="1.5"/>`);
+    }
+    // Decade labels evenly spread around circle
+    for (let d = 0; d < DECADES; d++) {
+      const dStart = START + d * 10;
+      const halfSpan = Math.min(4.5, (Math.min(dStart + 9, END) - dStart) / 2);
+      const midR = CENTER_R + (d * 10 + halfSpan) * rW;
+      const angle = -Math.PI / 2 + (d / DECADES) * 2 * Math.PI;
+      const lx = (cx + Math.cos(angle) * midR).toFixed(1);
+      const ly = (cy + Math.sin(angle) * midR).toFixed(1);
+      const fs = Math.max(9, rW * 8).toFixed(1);
+      els.push(`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="${fs}" font-family="'Segoe UI',system-ui" font-weight="700" fill="rgba(255,255,255,0.92)">${dStart}</text>`);
+    }
+  } else {
+    // ── Major mode: one wide ring per decade ──
+    for (let d = DECADES - 1; d >= 0; d--) {
+      const dStart = START + d * 10;
+      const dEnd = Math.min(dStart + 9, END);
+      const i = d * 10;
+      const R = (CENTER_R + (d + 1) * rW).toFixed(2);
+      els.push(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="${woodColor(i, TOTAL, d, false)}"/>`);
+      // Inner separator
+      const rIn = (CENTER_R + d * rW).toFixed(2);
+      els.push(`<circle cx="${cx}" cy="${cy}" r="${rIn}" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="2"/>`);
+      // Label in band, angle spread evenly
+      const midR = CENTER_R + (d + 0.5) * rW;
+      const angle = -Math.PI / 2 + (d / DECADES) * 2 * Math.PI;
+      const lx = (cx + Math.cos(angle) * midR).toFixed(1);
+      const ly = (cy + Math.sin(angle) * midR).toFixed(1);
+      const fs = Math.max(10, rW * 0.23).toFixed(1);
+      const rangeLabel = dStart === dEnd ? `${dStart}` : `${dStart}–${dEnd}`;
+      els.push(`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="${fs}" font-family="'Segoe UI',system-ui" font-weight="700" fill="rgba(255,255,255,0.92)">${rangeLabel}</text>`);
+    }
+  }
+
+  // Centre circle + label
+  els.push(`<circle cx="${cx}" cy="${cy}" r="${CENTER_R}" fill="${woodColor(0, TOTAL, 0, false)}"/>`);
+  const cfs = Math.max(9, CENTER_R * 0.52).toFixed(1);
+  els.push(`<text x="${cx}" y="${cy - CENTER_R * 0.15}" text-anchor="middle" dominant-baseline="middle" font-size="${cfs}" font-family="'Segoe UI',system-ui" font-weight="800" fill="rgba(255,255,255,0.95)">1975</text>`);
+  els.push(`<text x="${cx}" y="${cy + CENTER_R * 0.42}" text-anchor="middle" dominant-baseline="middle" font-size="${Math.max(7, CENTER_R * 0.35).toFixed(1)}" font-family="'Segoe UI',system-ui" fill="rgba(255,255,255,0.65)">誕生</text>`);
+
+  // Outermost year label
+  const outerR = CENTER_R + TOTAL * rW + 8;
+  els.push(`<text x="${cx}" y="${(cy - outerR).toFixed(1)}" text-anchor="middle" dominant-baseline="auto" font-size="11" font-family="'Segoe UI',system-ui" fill="rgba(255,255,255,0.45)">${END}</text>`);
+
+  container.innerHTML = `<svg viewBox="0 0 ${SZ} ${SZ}" width="${SZ}" height="${SZ}" style="max-width:100%;height:auto;display:block">\n  ${els.join('\n  ')}\n</svg>`;
 }
 
 init();
