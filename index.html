@@ -945,22 +945,25 @@ function renderTreeRings() {
     els.push(`<text x="${cx}" y="${(cy - outerR).toFixed(1)}" text-anchor="middle" dominant-baseline="auto" font-size="11" font-family="'Segoe UI',system-ui" fill="rgba(255,255,255,0.45)">${END}</text>`);
   }
 
-  // ── Event dots + title labels ──
+  // ── Event dots + milestone title labels ──
   const dotR = showMinorRings
     ? Math.max(3, Math.min(5.5, rW * 0.72))
     : Math.max(5, Math.min(9, rW * 0.11));
-  const hitR = dotR + 6;
+  const hitR  = dotR + 6;
   const outerEdgeR = showMinorRings ? CENTER_R + TOTAL * rW : CENTER_R + DECADES * rW;
-  const labelFs = Math.max(9, Math.min(11.5, SZ * 0.02));
-  const maxTitleLen = SZ < 480 ? 8 : (SZ < 540 ? 11 : 15);
 
+  // RWD label parameters (0 = hide labels)
+  const labelFs   = SZ >= 500 ? 10.5 : SZ >= 420 ? 9 : 0;
+  const maxLen    = SZ >= 500 ? 13   : SZ >= 420 ? 8 : 0;
+  const labelGap  = SZ >= 500 ? 20   : 15;   // px beyond outer ring
+  const levelStep = SZ >= 500 ? 17   : 13;   // px per overlap level
+
+  // Collect all event placements
   const eventsByYear = {};
   allEvents.forEach(ev => {
     if (ev.year >= START && ev.year <= END)
       (eventsByYear[ev.year] = eventsByYear[ev.year] || []).push(ev);
   });
-
-  // Collect placements so we can render in correct z-order
   const placements = [];
   Object.entries(eventsByYear).forEach(([year, events]) => {
     const i = parseInt(year) - START;
@@ -969,8 +972,7 @@ function renderTreeRings() {
       ringR = CENTER_R + (i + 0.5) * rW;
     } else {
       const d = Math.floor(i / 10);
-      const within = (i % 10 + 0.5) / 10;
-      ringR = CENTER_R + (d + within) * rW;
+      ringR = CENTER_R + (d + (i % 10 + 0.5) / 10) * rW;
     }
     const count = events.length;
     events.forEach((ev, idx) => {
@@ -978,37 +980,69 @@ function renderTreeRings() {
       const dx = parseFloat((cx + Math.cos(angle) * ringR).toFixed(1));
       const dy = parseFloat((cy + Math.sin(angle) * ringR).toFixed(1));
       const cats = getEventCategories(ev);
-      const color = cats.length > 0 ? cats[0].color : '#1d7fe5';
-      placements.push({ ev, angle, dx, dy, color });
+      placements.push({ ev, angle, dx, dy, catColor: cats[0]?.color || '#1d7fe5' });
     });
   });
 
-  // z-order: lines → hit areas → dots → text labels (text on top)
+  // z-order: lines → hit areas → dots → text (text always on top)
   const lineEls = [], hitEls = [], dotEls = [], textEls = [];
-  placements.forEach(({ ev, angle, dx, dy, color }) => {
+
+  // ① Dots for ALL events
+  placements.forEach(({ ev, dx, dy, catColor }) => {
     const eid = ev.id;
     hitEls.push(`<circle cx="${dx}" cy="${dy}" r="${hitR}" fill="transparent" class="re-hit" data-eid="${eid}" style="cursor:pointer"/>`);
-    dotEls.push(`<circle cx="${dx}" cy="${dy}" r="${dotR}" fill="${color}" stroke="rgba(255,255,255,0.85)" stroke-width="1.5" pointer-events="none"/>`);
-
-    if (isMilestoneEvent(ev)) {
-      const cos = Math.cos(angle), sin = Math.sin(angle);
-      // Leader line: from dot outward to just past outer edge
-      const lineEndR = outerEdgeR + 11;
-      const lx2 = (cx + cos * lineEndR).toFixed(1);
-      const ly2 = (cy + sin * lineEndR).toFixed(1);
-      lineEls.push(`<line x1="${dx}" y1="${dy}" x2="${lx2}" y2="${ly2}" stroke="rgba(255,255,255,0.15)" stroke-width="0.8" pointer-events="none"/>`);
-
-      // Title text outside the ring
-      const textR = outerEdgeR + 15;
-      const tx = (cx + cos * textR).toFixed(1);
-      const ty = (cy + sin * textR).toFixed(1);
-      const anchor = cos > 0.12 ? 'start' : cos < -0.12 ? 'end' : 'middle';
-      const baseline = Math.abs(sin) < 0.15 ? 'middle' : sin < 0 ? 'auto' : 'hanging';
-      const raw = ev.title || '';
-      const label = raw.length > maxTitleLen ? raw.slice(0, maxTitleLen) + '…' : raw;
-      textEls.push(`<text x="${tx}" y="${ty}" text-anchor="${anchor}" dominant-baseline="${baseline}" font-size="${labelFs}" font-family="'Segoe UI',system-ui" fill="rgba(255,255,255,0.9)" class="ring-label">${escHtml(label)}</text>`);
-    }
+    dotEls.push(`<circle cx="${dx}" cy="${dy}" r="${dotR}" fill="${catColor}" stroke="rgba(255,255,255,0.85)" stroke-width="1.5" pointer-events="none"/>`);
   });
+
+  // ② Labels for MILESTONE events only
+  if (labelFs > 0) {
+    const TWO_PI = 2 * Math.PI;
+    // Sort milestones by normalised angle for overlap detection
+    const milestones = placements
+      .filter(p => isMilestoneEvent(p.ev))
+      .map(p => ({ ...p, normAngle: ((p.angle % TWO_PI) + TWO_PI) % TWO_PI }))
+      .sort((a, b) => a.normAngle - b.normAngle);
+
+    const MIN_ANG = 0.25; // ≈14° — closer than this → bump to next level
+    let prevAngle = -999, level = 0;
+
+    milestones.forEach(({ ev, angle, dx, dy, catColor, normAngle }) => {
+      level = (normAngle - prevAngle < MIN_ANG) ? Math.min(level + 1, 2) : 0;
+      prevAngle = normAngle;
+
+      const cats = getEventCategories(ev);
+      const col  = cats[0]?.color || '#38bdf8';
+      const cos  = Math.cos(angle), sin = Math.sin(angle);
+      const baseR = outerEdgeR + labelGap + level * levelStep;
+
+      // Leader line dot → label
+      const lineEndR = baseR - 6;
+      lineEls.push(
+        `<line x1="${dx}" y1="${dy}" x2="${(cx+cos*lineEndR).toFixed(1)}" y2="${(cy+sin*lineEndR).toFixed(1)}" ` +
+        `stroke="${col}" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="2 2" pointer-events="none"/>`
+      );
+      // Tip dot
+      lineEls.push(
+        `<circle cx="${(cx+cos*(baseR-3)).toFixed(1)}" cy="${(cy+sin*(baseR-3)).toFixed(1)}" ` +
+        `r="2" fill="${col}" fill-opacity="0.8" pointer-events="none"/>`
+      );
+
+      // Title text — anchor & baseline from angular position
+      const tx     = (cx + cos * baseR).toFixed(1);
+      const ty     = (cy + sin * baseR).toFixed(1);
+      const anchor = cos >  0.12 ? 'start' : cos < -0.12 ? 'end' : 'middle';
+      const raw    = ev.title || '';
+      const label  = raw.length > maxLen ? raw.slice(0, maxLen) + '…' : raw;
+
+      // Dark outline for readability against warm wood tones
+      textEls.push(
+        `<text x="${tx}" y="${ty}" text-anchor="${anchor}" dominant-baseline="middle" ` +
+        `font-size="${labelFs}" font-family="'Segoe UI',system-ui" font-weight="600" ` +
+        `stroke="#020c1b" stroke-width="3" stroke-linejoin="round" paint-order="stroke" ` +
+        `fill="${col}" class="ring-label" pointer-events="none">${escHtml(label)}</text>`
+      );
+    });
+  }
 
   container.innerHTML = `<svg viewBox="0 0 ${SZ} ${SZ}" width="${SZ}" height="${SZ}" style="max-width:100%;height:auto;display:block;overflow:visible">\n  ${[...els, ...lineEls, ...hitEls, ...dotEls, ...textEls].join('\n  ')}\n</svg>`;
 
