@@ -507,7 +507,10 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.25);
   }
   .rings-track.on .rings-thumb { transform: translateX(16px); }
-  .rings-container { display: flex; justify-content: center; align-items: center; }
+  .rings-container { display: flex; justify-content: center; align-items: center; overflow: visible; }
+  .rings-wrap { overflow: visible; }
+  .ring-label { pointer-events: none; }
+  @media (max-width: 400px) { .ring-label { display: none; } }
   .rings-legend {
     display: flex; flex-wrap: wrap; align-items: center;
     gap: 0.5rem 1.2rem; margin-top: 0.8rem;
@@ -970,14 +973,16 @@ function renderTreeRings() {
     els.push(`<text x="${cx}" y="${(cy - outerR).toFixed(1)}" text-anchor="middle" dominant-baseline="auto" font-size="11" font-family="'Segoe UI',system-ui" fill="rgba(255,255,255,0.45)">${END}</text>`);
   }
 
-  // ── Event dots ──
-  // dotR: size proportional to ring width, capped
+  // ── Event dots + title labels ──
   const dotR = showMinorRings
     ? Math.max(3, Math.min(5.5, rW * 0.72))
     : Math.max(5, Math.min(9, rW * 0.11));
-  const hitR = dotR + 5;
+  const hitR = dotR + 6;
+  const outerEdgeR = showMinorRings ? CENTER_R + TOTAL * rW : CENTER_R + DECADES * rW;
+  const showLabels = ringCatFilter !== 'all';
+  const labelFs = Math.max(9, Math.min(11.5, SZ * 0.02));
+  const maxTitleLen = SZ < 480 ? 8 : (SZ < 540 ? 11 : 15);
 
-  // Use the rings' own independent category filter
   const visibleEvents = getRingEvents();
   const eventsByYear = {};
   visibleEvents.forEach(ev => {
@@ -985,8 +990,8 @@ function renderTreeRings() {
       (eventsByYear[ev.year] = eventsByYear[ev.year] || []).push(ev);
   });
 
-  // Draw hit areas first, then visible dots (dots on top)
-  const hitEls = [], dotEls = [];
+  // Collect placements so we can render in correct z-order
+  const placements = [];
   Object.entries(eventsByYear).forEach(([year, events]) => {
     const i = parseInt(year) - START;
     let ringR;
@@ -999,23 +1004,47 @@ function renderTreeRings() {
     }
     const count = events.length;
     events.forEach((ev, idx) => {
-      // Golden-angle base per year + even spread for same-year events
       const angle = GOLDEN_ANGLE * i + (idx / Math.max(count, 1)) * 2 * Math.PI;
-      const dx = (cx + Math.cos(angle) * ringR).toFixed(1);
-      const dy = (cy + Math.sin(angle) * ringR).toFixed(1);
+      const dx = parseFloat((cx + Math.cos(angle) * ringR).toFixed(1));
+      const dy = parseFloat((cy + Math.sin(angle) * ringR).toFixed(1));
       const cats = getEventCategories(ev);
       const color = cats.length > 0 ? cats[0].color : '#1d7fe5';
-      const eid = ev.id;
-      hitEls.push(`<circle cx="${dx}" cy="${dy}" r="${hitR}" fill="transparent" class="re-hit" data-eid="${eid}" style="cursor:pointer"/>`);
-      dotEls.push(`<circle cx="${dx}" cy="${dy}" r="${dotR}" fill="${color}" stroke="rgba(255,255,255,0.82)" stroke-width="1.5" class="re-dot" data-eid="${eid}" style="cursor:pointer"/>`);
+      placements.push({ ev, angle, dx, dy, color });
     });
   });
 
-  container.innerHTML = `<svg viewBox="0 0 ${SZ} ${SZ}" width="${SZ}" height="${SZ}" style="max-width:100%;height:auto;display:block">\n  ${[...els, ...hitEls, ...dotEls].join('\n  ')}\n</svg>`;
+  // z-order: lines → hit areas → dots → text labels (text on top)
+  const lineEls = [], hitEls = [], dotEls = [], textEls = [];
+  placements.forEach(({ ev, angle, dx, dy, color }) => {
+    const eid = ev.id;
+    hitEls.push(`<circle cx="${dx}" cy="${dy}" r="${hitR}" fill="transparent" class="re-hit" data-eid="${eid}" style="cursor:pointer"/>`);
+    dotEls.push(`<circle cx="${dx}" cy="${dy}" r="${dotR}" fill="${color}" stroke="rgba(255,255,255,0.85)" stroke-width="1.5" pointer-events="none"/>`);
 
-  // Wire interactions
+    if (showLabels) {
+      const cos = Math.cos(angle), sin = Math.sin(angle);
+      // Leader line: from dot outward to just past outer edge
+      const lineEndR = outerEdgeR + 11;
+      const lx2 = (cx + cos * lineEndR).toFixed(1);
+      const ly2 = (cy + sin * lineEndR).toFixed(1);
+      lineEls.push(`<line x1="${dx}" y1="${dy}" x2="${lx2}" y2="${ly2}" stroke="rgba(255,255,255,0.15)" stroke-width="0.8" pointer-events="none"/>`);
+
+      // Title text outside the ring
+      const textR = outerEdgeR + 15;
+      const tx = (cx + cos * textR).toFixed(1);
+      const ty = (cy + sin * textR).toFixed(1);
+      const anchor = cos > 0.12 ? 'start' : cos < -0.12 ? 'end' : 'middle';
+      const baseline = Math.abs(sin) < 0.15 ? 'middle' : sin < 0 ? 'auto' : 'hanging';
+      const raw = ev.title || '';
+      const label = raw.length > maxTitleLen ? raw.slice(0, maxTitleLen) + '…' : raw;
+      textEls.push(`<text x="${tx}" y="${ty}" text-anchor="${anchor}" dominant-baseline="${baseline}" font-size="${labelFs}" font-family="'Segoe UI',system-ui" fill="rgba(255,255,255,0.9)" class="ring-label">${escHtml(label)}</text>`);
+    }
+  });
+
+  container.innerHTML = `<svg viewBox="0 0 ${SZ} ${SZ}" width="${SZ}" height="${SZ}" style="max-width:100%;height:auto;display:block;overflow:visible">\n  ${[...els, ...lineEls, ...hitEls, ...dotEls, ...textEls].join('\n  ')}\n</svg>`;
+
+  // Wire interactions — only on hit areas to avoid double-fire
   const svg = container.querySelector('svg');
-  svg.querySelectorAll('.re-hit, .re-dot').forEach(el => {
+  svg.querySelectorAll('.re-hit').forEach(el => {
     const ev = allEvents.find(e => e.id === el.dataset.eid);
     if (!ev) return;
     if (isMobile()) {
