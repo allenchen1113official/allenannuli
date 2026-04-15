@@ -86,3 +86,7 @@ CREATE POLICY "Users delete own stats" ON stats FOR DELETE USING (auth.uid() = u
 -- UPDATE categories  SET user_id = auth.uid() WHERE user_id IS NULL;
 -- （需在登入後的 RLS 環境下執行，或直接填入你的 UUID）
 -- =============================================
+
+-- Add visibility control columns to events
+ALTER TABLE events ADD COLUMN IF NOT EXISTS show_on_homepage BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS show_on_rings BOOLEAN NOT NULL DEFAULT true;

@@ -691,8 +691,9 @@ function getEventCategories(event) {
 }
 
 function filterEvents(events) {
-  if (activeFilter === 'all') return events;
-  return events.filter(ev => getEventCategories(ev).some(cat => cat.id === activeFilter));
+  const visible = events.filter(ev => ev.show_on_homepage !== false);
+  if (activeFilter === 'all') return visible;
+  return visible.filter(ev => getEventCategories(ev).some(cat => cat.id === activeFilter));
 }
 
 function renderTimeline() {
@@ -960,7 +961,7 @@ function renderTreeRings() {
 
   // Collect all event placements
   const eventsByYear = {};
-  allEvents.forEach(ev => {
+  allEvents.filter(ev => ev.show_on_rings !== false).forEach(ev => {
     if (ev.year >= START && ev.year <= END)
       (eventsByYear[ev.year] = eventsByYear[ev.year] || []).push(ev);
   });

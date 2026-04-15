@@ -282,11 +282,13 @@
               <th>標題</th>
               <th>摘要</th>
               <th>分類</th>
+              <th style="width:54px;text-align:center">首頁</th>
+              <th style="width:54px;text-align:center">年輪</th>
               <th style="width:140px">操作</th>
             </tr>
           </thead>
           <tbody id="eventsTable">
-            <tr class="loading-row"><td colspan="7"><div class="spinner"></div></td></tr>
+            <tr class="loading-row"><td colspan="9"><div class="spinner"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -394,6 +396,26 @@
       <div class="form-group">
         <label class="form-label">圖片網址</label>
         <input type="url" id="eventImage" class="form-input" placeholder="https://...（選填）">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <div class="toggle-wrap">
+            <label class="toggle-switch">
+              <input type="checkbox" id="eventShowHomepage" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <span>顯示於首頁時間軸</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="toggle-wrap">
+            <label class="toggle-switch">
+              <input type="checkbox" id="eventShowRings" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <span>顯示於生命年輪</span>
+          </div>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">分類標籤</label>
@@ -668,12 +690,14 @@ function renderEventsTable() {
   const tbody = document.getElementById('eventsTable');
   document.getElementById('eventsCount').textContent = `(${allEvents.length} 筆)`;
   if (allEvents.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem">尚無資料</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:2rem">尚無資料</td></tr>`;
     return;
   }
   tbody.innerHTML = allEvents.map(ev => {
     const cats = (ev.event_categories || []).map(ec => ec.categories).filter(Boolean);
     const tagsHTML = cats.map(c => `<span class="tag" style="background:${c.color}">${c.icon||''} ${c.name}</span>`).join(' ');
+    const hp = ev.show_on_homepage !== false;
+    const rg = ev.show_on_rings !== false;
     return `<tr>
       <td>${ev.year}</td>
       <td>${ev.month || '—'}</td>
@@ -681,6 +705,14 @@ function renderEventsTable() {
       <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escHtml(ev.title)}">${escHtml(ev.title)}</td>
       <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)" title="${escHtml(ev.summary)}">${escHtml(ev.summary)}</td>
       <td style="max-width:180px">${tagsHTML || '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td style="text-align:center">
+        <button onclick="toggleEventFlag('${ev.id}','show_on_homepage',${!hp})" title="${hp?'點擊隱藏':'點擊顯示'}"
+          style="background:none;border:none;cursor:pointer;font-size:1.1rem;opacity:${hp?1:0.3}">${hp?'🏠':'🏠'}</button>
+      </td>
+      <td style="text-align:center">
+        <button onclick="toggleEventFlag('${ev.id}','show_on_rings',${!rg})" title="${rg?'點擊隱藏':'點擊顯示'}"
+          style="background:none;border:none;cursor:pointer;font-size:1.1rem;opacity:${rg?1:0.3}">${rg?'🌳':'🌳'}</button>
+      </td>
       <td><div class="td-actions">
         <button class="btn btn-ghost btn-sm" onclick="openEventModal('${ev.id}')">✏️ 編輯</button>
         <button class="btn btn-danger btn-sm" onclick="confirmDeleteEvent('${ev.id}')">🗑️</button>
@@ -759,6 +791,8 @@ function getSelectedCatIds() {
 function openEventModal(id) {
   document.getElementById('eventModalTitle').textContent = id ? '編輯紀事' : '新增紀事';
   ['eventId','eventYear','eventMonth','eventDay','eventTitle','eventSummary','eventDetail','eventImage'].forEach(k => document.getElementById(k).value = '');
+  document.getElementById('eventShowHomepage').checked = true;
+  document.getElementById('eventShowRings').checked = true;
   renderEventCatGrid(true);
   if (id) {
     const ev = allEvents.find(e => e.id === id);
@@ -771,6 +805,8 @@ function openEventModal(id) {
     document.getElementById('eventSummary').value = ev.summary;
     document.getElementById('eventDetail').value = ev.detail || '';
     document.getElementById('eventImage').value = ev.image_url || '';
+    document.getElementById('eventShowHomepage').checked = ev.show_on_homepage !== false;
+    document.getElementById('eventShowRings').checked = ev.show_on_rings !== false;
     const selectedCatIds = (ev.event_categories || []).map(ec => ec.category_id);
     document.querySelectorAll('#eventCatGrid .cat-checkbox').forEach(el => {
       if (selectedCatIds.includes(el.dataset.id)) el.classList.add('selected');
@@ -795,10 +831,14 @@ async function saveEvent() {
   try {
     let eventId = id;
     if (id) {
-      const { error } = await client.from('events').update({ year, month, day, title, summary, detail: detail||null, image_url: image_url||null }).eq('id', id).eq('user_id', currentUser.id);
+      const show_on_homepage = document.getElementById('eventShowHomepage').checked;
+      const show_on_rings = document.getElementById('eventShowRings').checked;
+      const { error } = await client.from('events').update({ year, month, day, title, summary, detail: detail||null, image_url: image_url||null, show_on_homepage, show_on_rings }).eq('id', id).eq('user_id', currentUser.id);
       if (error) throw error;
     } else {
-      const { data, error } = await client.from('events').insert([{ year, month, day, title, summary, detail: detail||null, image_url: image_url||null, user_id: currentUser.id }]).select();
+      const show_on_homepage = document.getElementById('eventShowHomepage').checked;
+      const show_on_rings = document.getElementById('eventShowRings').checked;
+      const { data, error } = await client.from('events').insert([{ year, month, day, title, summary, detail: detail||null, image_url: image_url||null, show_on_homepage, show_on_rings, user_id: currentUser.id }]).select();
       if (error) throw error;
       eventId = data[0].id;
     }
@@ -821,6 +861,12 @@ function confirmDeleteEvent(id) {
     if (error) return showToast(error.message, 'error');
     showToast('已刪除', 'success'); await loadEvents();
   });
+}
+
+async function toggleEventFlag(id, field, value) {
+  const { error } = await client.from('events').update({ [field]: value }).eq('id', id).eq('user_id', currentUser.id);
+  if (error) return showToast(error.message, 'error');
+  await loadEvents();
 }
 
 // ── CATEGORY MODAL ────────────────────────────────
